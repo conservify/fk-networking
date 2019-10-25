@@ -1,4 +1,4 @@
-package org.conservify.fk;
+package org.conservify.data;
 
 public class FileInfo {
     private final String file;

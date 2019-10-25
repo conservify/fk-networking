@@ -1,4 +1,4 @@
-package org.conservify.fk.pb;
+package org.conservify.data.pb;
 
 public class PbFile {
     public boolean readRecord(int record) {

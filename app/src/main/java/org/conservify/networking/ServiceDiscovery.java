@@ -7,8 +7,6 @@ import android.support.annotation.RequiresApi;
 import android.os.Build;
 import android.util.Log;
 
-import java.net.InetAddress;
-
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class ServiceDiscovery {
     private static final String TAG = "JS";
@@ -19,7 +17,7 @@ public class ServiceDiscovery {
     private final NsdManager.ResolveListener resolveListener;
     private final NsdManager nsdManager;
 
-    public ServiceDiscovery(Context context, NetworkingListener networkingListener) {
+    public ServiceDiscovery(Context context, final NetworkingListener networkingListener) {
         this.context = context;
         this.networkingListener = networkingListener;
 
@@ -32,8 +30,7 @@ public class ServiceDiscovery {
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
-                int port = serviceInfo.getPort();
-                InetAddress host = serviceInfo.getHost();
+                networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
             }
         };
 
@@ -50,8 +47,9 @@ public class ServiceDiscovery {
             }
 
             @Override
-            public void onServiceLost(NsdServiceInfo service) {
-                Log.e(TAG, "onServiceLost: " + service);
+            public void onServiceLost(NsdServiceInfo serviceInfo) {
+                Log.e(TAG, "onServiceLost: " + serviceInfo);
+                networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
             }
 
             @Override
@@ -76,10 +74,10 @@ public class ServiceDiscovery {
     }
 
 
-    public void start(/*Callback*/) {
+    public void start(String serviceType) {
         Log.d(TAG, "ServiceDiscovery.start called");
 
-        nsdManager.discoverServices("_fk._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
 
     void stop() {
