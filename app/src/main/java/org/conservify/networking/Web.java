@@ -1,29 +1,19 @@
 package org.conservify.networking;
 
 import android.content.Context;
-import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,24 +26,6 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
-class Task {
-    private final okhttp3.Request okRequest;
-    private final Call call;
-
-    public okhttp3.Request getOkRequest() {
-        return okRequest;
-    }
-
-    public Call getCall() {
-        return call;
-    }
-
-    public Task(okhttp3.Request okRequest, Call call) {
-        this.okRequest = okRequest;
-        this.call = call;
-    }
-}
-
 public class Web {
     private static final String TAG = "JS";
 
@@ -61,7 +33,6 @@ public class Web {
     private final WebTransferListener uploadListener;
     private final WebTransferListener downloadListener;
     private final RequestQueue requestQueue;
-    private final Map<String, Task> tasks = new HashMap<String, Task>();
     private final OkHttpClient okClient;
 
     public Web(Context context, WebTransferListener uploadListener, WebTransferListener downloadListener) {
@@ -112,7 +83,7 @@ public class Web {
                     sink = Okio.buffer(Okio.sink(new File(transfer.getPath())));
                     sink.writeAll(Okio.source(responseBody.byteStream()));
 
-                    downloadListener.onComplete(id, headers, null, response.code());
+                    downloadListener.onComplete(id, headers, null, null, response.code());
                 }
                 catch (IOException e) {
                     Log.e(TAG, "Error", e);
@@ -147,8 +118,9 @@ public class Web {
         VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), null, new Response.Listener<VerboseJsonObject>() {
             @Override
             public void onResponse(VerboseJsonObject response) {
+                String contentType = response.getHeaders().get("content-type");
                 downloadListener.onStarted(id, response.getHeaders());
-                downloadListener.onComplete(id, response.getHeaders(), response.getObject().toString(), response.getStatusCode());
+                downloadListener.onComplete(id, response.getHeaders(), contentType, response.getObject().toString(), response.getStatusCode());
             }
         }, new Response.ErrorListener() {
             @Override
@@ -159,6 +131,31 @@ public class Web {
         });
 
         addToRequestQueue(jsonObjectRequest);
+
+        return id;
+    }
+
+    public String binary(final WebTransfer transfer) {
+        final String id = UUID.randomUUID().toString();
+
+        Log.e(TAG, "Binary: " + transfer.getUrl());
+
+        BinaryRequest binaryRequest = new BinaryRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), new Response.Listener<BinaryResponse>() {
+            @Override
+            public void onResponse(BinaryResponse response) {
+                String contentType = response.getHeaders().get("content-type");
+                downloadListener.onStarted(id, response.getHeaders());
+                downloadListener.onComplete(id, response.getHeaders(), contentType, response.getData(), response.getStatusCode());
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG,"Error", error);
+                downloadListener.onError(id);
+            }
+        });
+
+        addToRequestQueue(binaryRequest);
 
         return id;
     }
