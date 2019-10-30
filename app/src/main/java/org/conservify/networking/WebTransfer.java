@@ -2,13 +2,23 @@ package org.conservify.networking;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class WebTransfer {
+    private String id;
     private String url;
     private String path;
     private Map<String, String> headers = new HashMap<String, String>();
     private String body;
     private String contentType;
+
+    public String getId() {
+        return id;
+    }
+
+    public String getTransferId() {
+        return id;
+    }
 
     public String getUrl() {
         return url;
@@ -51,12 +61,15 @@ public class WebTransfer {
     }
 
     public WebTransfer() {
+        this.id = UUID.randomUUID().toString();
     }
 
     public WebTransfer(String url) {
+        this.id = UUID.randomUUID().toString();
     }
 
     public WebTransfer(String url, String path, Map<String, String> headers) {
+        this.id = UUID.randomUUID().toString();
         this.url = url;
         this.path = path;
         this.headers = headers;

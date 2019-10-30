@@ -51,7 +51,7 @@ public class Web {
     }
 
     public String download(final WebTransfer transfer) {
-        final String id = UUID.randomUUID().toString();
+        final String id = transfer.getId();
 
         Log.e(TAG, "Download: " + transfer.getUrl() + " to " + transfer.getPath());
 
@@ -105,13 +105,14 @@ public class Web {
     }
 
     public String upload(final WebTransfer transfer) {
-        final String id = UUID.randomUUID().toString();
+        final String id = transfer.getId();
+
         Log.e(TAG, "Upload: " + transfer.getUrl() + " to " + transfer.getPath());
         return id;
     }
 
     public String json(final WebTransfer transfer) {
-        final String id = UUID.randomUUID().toString();
+        final String id = transfer.getId();
 
         Log.e(TAG, "JSON: " + transfer.getUrl());
 
@@ -136,7 +137,7 @@ public class Web {
     }
 
     public String binary(final WebTransfer transfer) {
-        final String id = UUID.randomUUID().toString();
+        final String id = transfer.getId();
 
         Log.e(TAG, "Binary: " + transfer.getUrl());
 
@@ -145,7 +146,7 @@ public class Web {
             public void onResponse(BinaryResponse response) {
                 String contentType = response.getHeaders().get("content-type");
                 downloadListener.onStarted(id, response.getHeaders());
-                downloadListener.onComplete(id, response.getHeaders(), contentType, response.getData(), response.getStatusCode());
+                downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, response.getData(), response.getStatusCode());
             }
         }, new Response.ErrorListener() {
             @Override
