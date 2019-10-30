@@ -95,7 +95,7 @@ public class Web {
                 }
                 catch (IOException e) {
                     Log.e(TAG, "error", e);
-                    downloadListener.onError(id);
+                    downloadListener.onError(id, e.getMessage());
                 }
                 finally {
                     if (sink != null) {
@@ -166,7 +166,7 @@ public class Web {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e(TAG,"Error", error);
-                downloadListener.onError(id);
+                downloadListener.onError(id, error.getMessage());
             }
         });
 
@@ -203,7 +203,7 @@ public class Web {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e(TAG,"Error", error);
-                downloadListener.onError(id);
+                downloadListener.onError(id, error.getMessage());
             }
         });
 
