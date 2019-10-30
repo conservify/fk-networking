@@ -70,7 +70,7 @@ public class WifiNetworksManager {
                     List<WifiNetwork> list = new ArrayList<WifiNetwork>();
                     for (ScanResult sr : results) {
                         list.add(new WifiNetwork(sr.SSID));
-                        Log.i(TAG, "Network: " + sr.SSID);
+                        Log.i(TAG, "network: " + sr.SSID);
                     }
                     WifiNetworks networks = new WifiNetworks(list);
                     networkingListener.onNetworksFound(networks);

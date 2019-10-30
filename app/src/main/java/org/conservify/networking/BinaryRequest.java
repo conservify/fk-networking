@@ -11,10 +11,12 @@ import java.util.Map;
 public class BinaryRequest extends Request<BinaryResponse> {
     private final Map<String, String> headers;
     private final Response.Listener<BinaryResponse> listener;
+    private final byte[] requestBody;
 
-    public BinaryRequest(int method, String url, Map<String, String> headers, Response.Listener<BinaryResponse> listener, Response.ErrorListener errorListener) {
+    public BinaryRequest(int method, String url, Map<String, String> headers, byte[] requestBody, Response.Listener<BinaryResponse> listener, Response.ErrorListener errorListener) {
         super(method, url, errorListener);
         this.headers = headers;
+        this.requestBody = requestBody;
         this.listener = listener;
     }
 
@@ -32,5 +34,10 @@ public class BinaryRequest extends Request<BinaryResponse> {
     @Override
     protected void deliverResponse(BinaryResponse response) {
         listener.onResponse(response);
+    }
+
+    @Override
+    public byte[] getBody() {
+        return requestBody;
     }
 }

@@ -11,6 +11,8 @@ public class WebTransfer {
     private Map<String, String> headers = new HashMap<String, String>();
     private String body;
     private String contentType;
+    private boolean base64DecodeRequestBody;
+    private boolean base64EncodeResponseBody;
 
     public String getId() {
         return id;
@@ -50,6 +52,22 @@ public class WebTransfer {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public boolean isBase64DecodeRequestBody() {
+        return base64DecodeRequestBody;
+    }
+
+    public void setBase64DecodeRequestBody(boolean base64DecodeRequestBody) {
+        this.base64DecodeRequestBody = base64DecodeRequestBody;
+    }
+
+    public boolean isBase64EncodeResponseBody() {
+        return base64EncodeResponseBody;
+    }
+
+    public void setBase64EncodeResponseBody(boolean base64EncodeResponseBody) {
+        this.base64EncodeResponseBody = base64EncodeResponseBody;
     }
 
     public String getContentType() {

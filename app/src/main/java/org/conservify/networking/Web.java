@@ -1,15 +1,19 @@
 package org.conservify.networking;
 
 import android.content.Context;
+import android.util.Base64;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +57,7 @@ public class Web {
     public String download(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "Download: " + transfer.getUrl() + " to " + transfer.getPath());
+        Log.e(TAG, "[networking] download: " + transfer.getUrl() + " to " + transfer.getPath());
 
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(transfer.getUrl())
@@ -62,7 +66,7 @@ public class Web {
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.i(TAG, "Failure", e);
+                Log.i(TAG, "failure", e);
             }
 
             @Override
@@ -86,7 +90,7 @@ public class Web {
                     downloadListener.onComplete(id, headers, null, null, response.code());
                 }
                 catch (IOException e) {
-                    Log.e(TAG, "Error", e);
+                    Log.e(TAG, "error", e);
                     downloadListener.onError(id);
                 }
                 finally {
@@ -94,7 +98,7 @@ public class Web {
                         try {
                             sink.close();
                         } catch (IOException e) {
-                            Log.e(TAG, "Error", e);
+                            Log.e(TAG, "error", e);
                         }
                     }
                 }
@@ -107,16 +111,18 @@ public class Web {
     public String upload(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "Upload: " + transfer.getUrl() + " to " + transfer.getPath());
+        Log.e(TAG, "[networking] upload: " + transfer.getUrl() + " to " + transfer.getPath());
         return id;
     }
 
     public String json(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "JSON: " + transfer.getUrl());
+        Log.e(TAG, "[networking] json: " + transfer.getUrl());
 
-        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), null, new Response.Listener<VerboseJsonObject>() {
+        String requestBody = transfer.getBody();
+
+        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
             @Override
             public void onResponse(VerboseJsonObject response) {
                 String contentType = response.getHeaders().get("content-type");
@@ -139,14 +145,27 @@ public class Web {
     public String binary(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "Binary: " + transfer.getUrl());
+        Log.e(TAG, "[networking] binary: " + transfer.getUrl());
 
-        BinaryRequest binaryRequest = new BinaryRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), new Response.Listener<BinaryResponse>() {
+        byte[] requestBody = null;
+
+        if (transfer.isBase64DecodeRequestBody()) {
+            requestBody = Base64.decode(transfer.getBody(), 0);
+        }
+
+        BinaryRequest binaryRequest = new BinaryRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
             @Override
             public void onResponse(BinaryResponse response) {
                 String contentType = response.getHeaders().get("content-type");
+
+                Object body = response.getData();
+                if (transfer.isBase64EncodeResponseBody()) {
+                    body = Base64.encodeToString(response.getData(), 0);
+                }
+
                 downloadListener.onStarted(id, response.getHeaders());
-                downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, response.getData(), response.getStatusCode());
+                downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
+
             }
         }, new Response.ErrorListener() {
             @Override
