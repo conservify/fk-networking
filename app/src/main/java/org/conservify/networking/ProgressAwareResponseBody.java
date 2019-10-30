@@ -63,8 +63,8 @@ public class ProgressAwareResponseBody extends ResponseBody {
                 totalBytesRead += bytesRead != -1 ? bytesRead : 0;
 
                 if (lastProgress == 0 || totalBytesRead == contentLength || System.currentTimeMillis() - lastProgress > 500) {
-                    lastProgress = System.currentTimeMillis();
                     listener.onProgress(tag, headers, totalBytesRead, contentLength);
+                    lastProgress = System.currentTimeMillis();
                 }
 
                 return bytesRead;

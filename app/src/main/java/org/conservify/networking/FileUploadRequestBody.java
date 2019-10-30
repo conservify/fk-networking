@@ -36,6 +36,9 @@ public class FileUploadRequestBody extends RequestBody {
     @Nullable
     @Override
     public MediaType contentType() {
+        if (contentType == null) {
+            return null;
+        }
         return MediaType.parse(contentType);
     }
 
@@ -47,6 +50,7 @@ public class FileUploadRequestBody extends RequestBody {
         try {
             source = Okio.source(this.file);
 
+            long lastProgress = 0;
             long copied = 0;
             long read = 0;
 
@@ -57,7 +61,10 @@ public class FileUploadRequestBody extends RequestBody {
 
                 bufferedSink.flush();
 
-                uploadListener.onProgress(taskId, headers, copied, file.length());
+                if (System.currentTimeMillis() - lastProgress > 500) {
+                    uploadListener.onProgress(taskId, headers, copied, file.length());
+                    lastProgress = System.currentTimeMillis();
+                }
             }
 
             uploadListener.onProgress(taskId, headers, copied, file.length());
