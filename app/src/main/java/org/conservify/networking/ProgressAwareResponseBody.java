@@ -3,6 +3,8 @@ package org.conservify.networking;
 import android.support.annotation.NonNull;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -47,7 +49,9 @@ public class ProgressAwareResponseBody extends ResponseBody {
     }
 
     private Source source(Source source) {
-        listener.onProgress(tag, 0, contentLength());
+        final Map<String, String> headers = new HashMap<>();
+
+        listener.onProgress(tag, headers, 0, contentLength());
 
         return new ForwardingSource(source) {
             long totalBytesRead = 0;
@@ -60,7 +64,7 @@ public class ProgressAwareResponseBody extends ResponseBody {
 
                 if (lastProgress == 0 || totalBytesRead == contentLength || System.currentTimeMillis() - lastProgress > 500) {
                     lastProgress = System.currentTimeMillis();
-                    listener.onProgress(tag, totalBytesRead, contentLength);
+                    listener.onProgress(tag, headers, totalBytesRead, contentLength);
                 }
 
                 return bytesRead;

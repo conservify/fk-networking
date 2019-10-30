@@ -25,6 +25,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -59,7 +60,10 @@ public class Web {
 
         Log.e(TAG, "[networking] download: " + transfer.getUrl() + " to " + transfer.getPath());
 
+        Headers headers = Headers.of(transfer.getHeaders());
+
         okhttp3.Request request = new okhttp3.Request.Builder()
+                .headers(headers)
                 .url(transfer.getUrl())
                 .build();
 
@@ -77,7 +81,7 @@ public class Web {
                     headers.put(responseHeaders.name(i), responseHeaders.value(i));
                 }
 
-                downloadListener.onStarted(id, headers);
+                String contentType = response.headers().get("Content-Type");
 
                 ResponseBody responseBody = new ProgressAwareResponseBody(id, response.headers(), response.body(), downloadListener);
                 BufferedSource bufferedSource = responseBody.source();
@@ -87,7 +91,7 @@ public class Web {
                     sink = Okio.buffer(Okio.sink(new File(transfer.getPath())));
                     sink.writeAll(Okio.source(responseBody.byteStream()));
 
-                    downloadListener.onComplete(id, headers, null, null, response.code());
+                    downloadListener.onComplete(id, headers, contentType, null, response.code());
                 }
                 catch (IOException e) {
                     Log.e(TAG, "error", e);
@@ -112,6 +116,36 @@ public class Web {
         final String id = transfer.getId();
 
         Log.e(TAG, "[networking] upload: " + transfer.getUrl() + " to " + transfer.getPath());
+
+        Headers headers = Headers.of(transfer.getHeaders());
+        String contentType = headers.get("Content-Type");
+        RequestBody requestBody = new FileUploadRequestBody(id, new File(transfer.getPath()), contentType, uploadListener);
+
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .post(requestBody)
+                .url(transfer.getUrl())
+                .headers(headers)
+                .build();
+
+        okClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.i(TAG, "failure", e);
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
+                Map<String, String> headers = new HashMap<String, String>();
+                Headers responseHeaders = response.headers();
+                for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+                    headers.put(responseHeaders.name(i), responseHeaders.value(i));
+                }
+
+                String contentType = responseHeaders.get("content-type");
+                downloadListener.onComplete(id, headers, contentType, null, response.code());
+            }
+        });
+
         return id;
     }
 
@@ -126,7 +160,6 @@ public class Web {
             @Override
             public void onResponse(VerboseJsonObject response) {
                 String contentType = response.getHeaders().get("content-type");
-                downloadListener.onStarted(id, response.getHeaders());
                 downloadListener.onComplete(id, response.getHeaders(), contentType, response.getObject().toString(), response.getStatusCode());
             }
         }, new Response.ErrorListener() {
@@ -163,7 +196,6 @@ public class Web {
                     body = Base64.encodeToString(response.getData(), 0);
                 }
 
-                downloadListener.onStarted(id, response.getHeaders());
                 downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
 
             }
