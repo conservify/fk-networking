@@ -12,10 +12,10 @@ public class FileSystem {
     }
 
     public DataFile openData(String path) {
-        return null;
+        return new DataFile(listener, path);
     }
 
     public MetaFile openMeta(String path) {
-        return null;
+        return new MetaFile(listener, path);
     }
 }

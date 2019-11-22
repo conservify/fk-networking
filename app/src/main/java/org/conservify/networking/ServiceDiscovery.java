@@ -42,7 +42,7 @@ public class ServiceDiscovery {
 
             @Override
             public void onServiceFound(NsdServiceInfo service) {
-                Log.d(TAG, "onServiceFound: " + service);
+                Log.d(TAG, "onServiceFound: " + service + ", resolving...");
                 nsdManager.resolveService(service, resolveListener);
             }
 
@@ -85,7 +85,7 @@ public class ServiceDiscovery {
         nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
 
-    void stop() {
+    public void stop() {
         Log.d(TAG, "ServiceDiscovery.stop");
         nsdManager.stopServiceDiscovery(discoveryListener);
     }
