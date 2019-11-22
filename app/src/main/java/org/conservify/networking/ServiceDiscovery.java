@@ -49,7 +49,12 @@ public class ServiceDiscovery {
             @Override
             public void onServiceLost(NsdServiceInfo serviceInfo) {
                 Log.e(TAG, "onServiceLost: " + serviceInfo);
-                networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
+                if (serviceInfo.getHost() != null) {
+                    networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
+                }
+                else {
+                    networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), null, serviceInfo.getPort()));
+                }
             }
 
             @Override
