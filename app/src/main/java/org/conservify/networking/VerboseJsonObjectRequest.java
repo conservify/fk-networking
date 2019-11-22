@@ -46,7 +46,10 @@ public class VerboseJsonObjectRequest extends Request<VerboseJsonObject> {
     protected Response<VerboseJsonObject> parseNetworkResponse(NetworkResponse response) {
         try {
             String jsonString = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
-            JSONObject object = new JSONObject(jsonString);
+            JSONObject object = null;
+            if (jsonString.length() > 0 ) {
+                object = new JSONObject(jsonString);
+            }
             VerboseJsonObject vjo = new VerboseJsonObject(object, response.statusCode, response.headers);
             return Response.success(vjo, HttpHeaderParser.parseCacheHeaders(response));
         } catch (UnsupportedEncodingException e) {

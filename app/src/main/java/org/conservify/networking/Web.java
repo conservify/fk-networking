@@ -174,7 +174,8 @@ public class Web {
             @Override
             public void onResponse(VerboseJsonObject response) {
                 String contentType = response.getHeaders().get("content-type");
-                downloadListener.onComplete(id, response.getHeaders(), contentType, response.getObject().toString(), response.getStatusCode());
+                String body = response.getObject() != null ? response.getObject().toString() : null;
+                downloadListener.onComplete(id, response.getHeaders(), contentType, body, response.getStatusCode());
             }
         }, new Response.ErrorListener() {
             @Override
