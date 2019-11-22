@@ -143,6 +143,7 @@ public class Web {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 Log.e(TAG, "[networking] " + id + " failure", e);
+                downloadListener.onError(id, e.getMessage());
             }
 
             @Override
