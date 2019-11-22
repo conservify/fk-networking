@@ -55,17 +55,31 @@ public class Web {
         requestQueue.add(req);
     }
 
+    private okhttp3.Request buildDownloadRequest(WebTransfer transfer) {
+        Headers headers = Headers.of(transfer.getHeaders());
+
+        if (getMethod(transfer.getMethod()) == Request.Method.GET) {
+            return new okhttp3.Request.Builder()
+                    .headers(headers)
+                    .url(transfer.getUrl())
+                    .build();
+        }
+
+        RequestBody requestbody = RequestBody.create(new byte[0]);
+
+        return new okhttp3.Request.Builder()
+                .method(transfer.getMethod(), requestbody)
+                .headers(headers)
+                .url(transfer.getUrl())
+                .build();
+    }
+
     public String download(final WebTransfer transfer) {
         final String id = transfer.getId();
 
         Log.e(TAG, "[networking] download: " + transfer.getUrl() + " to " + transfer.getPath());
 
-        Headers headers = Headers.of(transfer.getHeaders());
-
-        okhttp3.Request request = new okhttp3.Request.Builder()
-                .headers(headers)
-                .url(transfer.getUrl())
-                .build();
+        okhttp3.Request request = buildDownloadRequest(transfer);
 
         okClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -122,7 +136,7 @@ public class Web {
         RequestBody requestBody = new FileUploadRequestBody(id, new File(transfer.getPath()), contentType, uploadListener);
 
         okhttp3.Request request = new okhttp3.Request.Builder()
-                .post(requestBody)
+                .method(transfer.getMethod(), requestBody)
                 .url(transfer.getUrl())
                 .headers(headers)
                 .build();
@@ -156,7 +170,7 @@ public class Web {
 
         String requestBody = transfer.getBody();
 
-        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
+        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(getMethod(transfer.getMethod()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
             @Override
             public void onResponse(VerboseJsonObject response) {
                 String contentType = response.getHeaders().get("content-type");
@@ -186,7 +200,7 @@ public class Web {
             requestBody = Base64.decode(transfer.getBody(), 0);
         }
 
-        BinaryRequest binaryRequest = new BinaryRequest(Request.Method.GET, transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
+        BinaryRequest binaryRequest = new BinaryRequest(getMethod(transfer.getMethod()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
             @Override
             public void onResponse(BinaryResponse response) {
                 String contentType = response.getHeaders().get("content-type");
@@ -210,5 +224,16 @@ public class Web {
         addToRequestQueue(binaryRequest);
 
         return id;
+    }
+
+    private int getMethod(String method) {
+        switch (method.toUpperCase()) {
+            case "GET": return Request.Method.GET;
+            case "POST": return Request.Method.POST;
+            case "DELETE": return Request.Method.DELETE;
+            case "HEAD": return Request.Method.HEAD;
+            case "PATCH": return Request.Method.PATCH;
+        }
+        throw new RuntimeException("Unknown Method: " + method);
     }
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class WebTransfer {
     private String id;
+    private String method;
     private String url;
     private String path;
     private Map<String, String> headers = new HashMap<String, String>();
@@ -20,6 +21,14 @@ public class WebTransfer {
 
     public String getTransferId() {
         return id;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
     }
 
     public String getUrl() {
