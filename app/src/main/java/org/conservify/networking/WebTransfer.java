@@ -27,6 +27,13 @@ public class WebTransfer {
         return method;
     }
 
+    public String getMethodOrDefault() {
+        if (method == null) {
+            return "GET";
+        }
+        return method;
+    }
+
     public void setMethod(String method) {
         this.method = method;
     }

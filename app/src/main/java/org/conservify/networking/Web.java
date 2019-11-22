@@ -54,7 +54,7 @@ public class Web {
     private okhttp3.Request buildDownloadRequest(WebTransfer transfer) {
         Headers headers = Headers.of(transfer.getHeaders());
 
-        if (getMethod(transfer.getMethod()) == Request.Method.GET) {
+        if (getMethod(transfer.getMethodOrDefault()) == Request.Method.GET) {
             return new okhttp3.Request.Builder()
                     .headers(headers)
                     .url(transfer.getUrl())
@@ -73,18 +73,20 @@ public class Web {
     public String download(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] download: " + transfer.getUrl() + " to " + transfer.getPath());
+        Log.e(TAG, "[networking] " + id + " download: " + transfer.getMethodOrDefault() + " " + transfer.getUrl() + " to " + transfer.getPath());
 
         okhttp3.Request request = buildDownloadRequest(transfer);
 
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.i(TAG, "failure", e);
+                Log.e(TAG, "[networking] " + id + " failure", e);
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
+                Log.i(TAG, "[networking] " + id + " done");
+
                 Map<String, String> headers = new HashMap<String, String>();
                 Headers responseHeaders = response.headers();
                 for (int i = 0, size = responseHeaders.size(); i < size; i++) {
@@ -104,7 +106,7 @@ public class Web {
                     downloadListener.onComplete(id, headers, contentType, null, response.code());
                 }
                 catch (IOException e) {
-                    Log.e(TAG, "error", e);
+                    Log.e(TAG, "[networking] " + id + " failure", e);
                     downloadListener.onError(id, e.getMessage());
                 }
                 finally {
@@ -125,14 +127,14 @@ public class Web {
     public String upload(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] upload: " + transfer.getUrl() + " to " + transfer.getPath());
+        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + transfer.getUrl() + " to " + transfer.getPath());
 
         Headers headers = Headers.of(transfer.getHeaders());
         String contentType = headers.get("Content-Type");
         RequestBody requestBody = new FileUploadRequestBody(id, new File(transfer.getPath()), contentType, uploadListener);
 
         okhttp3.Request request = new okhttp3.Request.Builder()
-                .method(transfer.getMethod(), requestBody)
+                .method(transfer.getMethodOrDefault(), requestBody)
                 .url(transfer.getUrl())
                 .headers(headers)
                 .build();
@@ -140,11 +142,13 @@ public class Web {
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.i(TAG, "failure", e);
+                Log.e(TAG, "[networking] " + id + " failure", e);
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
+                Log.i(TAG, "[networking] " + id + " done");
+
                 Map<String, String> headers = new HashMap<String, String>();
                 Headers responseHeaders = response.headers();
                 for (int i = 0, size = responseHeaders.size(); i < size; i++) {
@@ -162,13 +166,15 @@ public class Web {
     public String json(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] json: " + transfer.getUrl());
+        Log.e(TAG, "[networking] " + id + " json: " + transfer.getMethodOrDefault() + " " + transfer.getUrl());
 
         String requestBody = transfer.getBody();
 
-        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(getMethod(transfer.getMethod()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
+        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
             @Override
             public void onResponse(VerboseJsonObject response) {
+                Log.i(TAG, "[networking] " + id + " done");
+
                 String contentType = response.getHeaders().get("content-type");
                 String body = response.getObject() != null ? response.getObject().toString() : null;
                 downloadListener.onComplete(id, response.getHeaders(), contentType, body, response.getStatusCode());
@@ -176,7 +182,7 @@ public class Web {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e(TAG,"Error", error);
+                Log.e(TAG,"[networking] " + id + " failure", error);
                 downloadListener.onError(id, error.getMessage());
             }
         });
@@ -189,7 +195,7 @@ public class Web {
     public String binary(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] binary: " + transfer.getUrl());
+        Log.e(TAG, "[networking] " + id + " binary: " + transfer.getMethodOrDefault() + " " + transfer.getUrl());
 
         byte[] requestBody = null;
 
@@ -197,9 +203,11 @@ public class Web {
             requestBody = Base64.decode(transfer.getBody(), 0);
         }
 
-        BinaryRequest binaryRequest = new BinaryRequest(getMethod(transfer.getMethod()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
+        BinaryRequest binaryRequest = new BinaryRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
             @Override
             public void onResponse(BinaryResponse response) {
+                Log.i(TAG, "[networking] " + id + " done");
+
                 String contentType = response.getHeaders().get("content-type");
 
                 Object body = response.getData();
@@ -213,7 +221,7 @@ public class Web {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e(TAG,"Error", error);
+                Log.e(TAG,"[networking] " + id + " failure", error);
                 downloadListener.onError(id, error.getMessage());
             }
         });
@@ -224,9 +232,6 @@ public class Web {
     }
 
     private int getMethod(String method) {
-        if (method == null) {
-            return Request.Method.GET;
-        }
         switch (method.toUpperCase()) {
             case "GET": return Request.Method.GET;
             case "POST": return Request.Method.POST;
