@@ -224,6 +224,9 @@ public class Web {
     }
 
     private int getMethod(String method) {
+        if (method == null) {
+            return Request.Method.GET;
+        }
         switch (method.toUpperCase()) {
             case "GET": return Request.Method.GET;
             case "POST": return Request.Method.POST;
