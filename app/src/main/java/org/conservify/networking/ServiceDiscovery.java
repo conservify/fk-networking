@@ -50,10 +50,10 @@ public class ServiceDiscovery {
             public void onServiceLost(NsdServiceInfo serviceInfo) {
                 Log.e(TAG, "onServiceLost: " + serviceInfo);
                 if (serviceInfo.getHost() != null) {
-                    networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
+                    networkingListener.onLostService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
                 }
                 else {
-                    networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), null, serviceInfo.getPort()));
+                    networkingListener.onLostService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), null, serviceInfo.getPort()));
                 }
             }
 
