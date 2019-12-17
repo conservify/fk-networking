@@ -38,6 +38,7 @@ public class ServiceDiscovery {
             @Override
             public void onDiscoveryStarted(String regType) {
                 Log.d(TAG, "Service discovery started");
+                networkingListener.onStarted();
             }
 
             @Override
@@ -66,6 +67,7 @@ public class ServiceDiscovery {
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
                 Log.e(TAG, "Discovery failed: Error code:" + errorCode);
                 nsdManager.stopServiceDiscovery(this);
+                networkingListener.onDiscoveryFailed();
             }
 
             @Override
