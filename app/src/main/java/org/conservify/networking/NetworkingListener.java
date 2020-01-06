@@ -7,8 +7,5 @@ public interface NetworkingListener {
     void onFoundService(ServiceInfo service);
     void onLostService(ServiceInfo service);
 
-    void onConnectionInfo(boolean connected);
-    void onConnectedNetwork(WifiNetwork network);
-    void onNetworksFound(WifiNetworks networks);
-    void onNetworkScanError();
+    void onNetworkStatus(NetworkingStatus status);
 }

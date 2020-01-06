@@ -45,17 +45,22 @@ public class WifiNetworksManager {
     public void findConnectedNetwork() {
         final ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkInfo networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        final NetworkingStatus status = new NetworkingStatus();
+
+
         if (networkInfo.isConnected()) {
             final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
             if (connectionInfo != null) {
                 WifiNetwork network = new WifiNetwork(connectionInfo.getSSID());
-                this.networkingListener.onConnectedNetwork(network);
+                status.setConnectedWifi(network);
             }
 
             NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-            this.networkingListener.onConnectionInfo(activeNetworkInfo.isConnected());
+            status.setConnected(activeNetworkInfo.isConnected());
         }
+
+        this.networkingListener.onNetworkStatus(status);
     }
 
     public void scan() {
@@ -64,6 +69,7 @@ public class WifiNetworksManager {
         BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent intent) {
+                final NetworkingStatus status = new NetworkingStatus();
                 boolean success = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false);
                 if (success) {
                     List<ScanResult> results = wifiManager.getScanResults();
@@ -72,11 +78,12 @@ public class WifiNetworksManager {
                         list.add(new WifiNetwork(sr.SSID));
                         Log.i(TAG, "network: " + sr.SSID);
                     }
-                    WifiNetworks networks = new WifiNetworks(list);
-                    networkingListener.onNetworksFound(networks);
+                    status.setWifiNetworks(new WifiNetworks(list));
                 } else {
-                    networkingListener.onNetworkScanError();
+                    status.setScanError(true);
                 }
+
+                networkingListener.onNetworkStatus(status);
             }
         };
 
@@ -84,9 +91,10 @@ public class WifiNetworksManager {
         intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         context.registerReceiver(wifiScanReceiver, intentFilter);
 
-        boolean success = wifiManager.startScan();
-        if (!success) {
-            networkingListener.onNetworkScanError();
+        if (!wifiManager.startScan()) {
+            final NetworkingStatus status = new NetworkingStatus();
+            status.setScanError(true);
+            this.networkingListener.onNetworkStatus(status);
         }
     }
 }
