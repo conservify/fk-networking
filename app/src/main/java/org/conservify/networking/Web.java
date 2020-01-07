@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -211,9 +213,11 @@ public class Web {
 
                 String contentType = response.getHeaders().get("content-type");
 
-                Object body = response.getData();
+                Object body = null;
                 if (transfer.isBase64EncodeResponseBody()) {
                     body = Base64.encodeToString(response.getData(), 0);
+                } else {
+                    body = new String(response.getData(), Charset.forName("UTF-8"));
                 }
 
                 downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
