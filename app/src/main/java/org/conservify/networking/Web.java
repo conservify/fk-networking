@@ -216,6 +216,9 @@ public class Web {
         if (transfer.isBase64DecodeRequestBody()) {
             requestBody = Base64.decode(transfer.getBody(), 0);
         }
+        else if (transfer.getBody() != null) {
+            requestBody = transfer.getBody().getBytes(Charset.forName("UTF-8"));
+        }
 
         BinaryRequest binaryRequest = new BinaryRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
             @Override
