@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -36,7 +36,6 @@ public class Web {
     private final WebTransferListener uploadListener;
     private final WebTransferListener downloadListener;
     private final RequestQueue requestQueue;
-    private final OkHttpClient okClient;
 
     public Web(Context context, WebTransferListener uploadListener, WebTransferListener downloadListener) {
         if (uploadListener == null) throw new IllegalArgumentException();
@@ -46,7 +45,6 @@ public class Web {
         this.uploadListener = uploadListener;
         this.downloadListener = downloadListener;
         this.requestQueue = Volley.newRequestQueue(this.context);
-        this.okClient = new OkHttpClient();
     }
 
     public <T> void addToRequestQueue(Request<T> req) {
@@ -78,6 +76,12 @@ public class Web {
         Log.e(TAG, "[networking] " + id + " download: " + transfer.getMethodOrDefault() + " " + transfer.getUrl() + " to " + transfer.getPath());
 
         okhttp3.Request request = buildDownloadRequest(transfer);
+
+        final OkHttpClient okClient = new OkHttpClient.Builder()
+                .connectTimeout(transfer.getConnectionTimeout(), TimeUnit.SECONDS)
+                .readTimeout(transfer.getDefaultTimeout(), TimeUnit.SECONDS)
+                .writeTimeout(transfer.getDefaultTimeout(), TimeUnit.SECONDS)
+                .build();
 
         okClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -140,6 +144,12 @@ public class Web {
                 .method(transfer.getMethodOrDefault(), requestBody)
                 .url(transfer.getUrl())
                 .headers(headers)
+                .build();
+
+        final OkHttpClient okClient = new OkHttpClient.Builder()
+                .connectTimeout(transfer.getConnectionTimeout(), TimeUnit.SECONDS)
+                .readTimeout(transfer.getDefaultTimeout(), TimeUnit.SECONDS)
+                .writeTimeout(transfer.getDefaultTimeout(), TimeUnit.SECONDS)
                 .build();
 
         okClient.newCall(request).enqueue(new Callback() {

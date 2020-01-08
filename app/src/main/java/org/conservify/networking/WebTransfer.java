@@ -14,6 +14,8 @@ public class WebTransfer {
     private String contentType;
     private boolean base64DecodeRequestBody;
     private boolean base64EncodeResponseBody;
+    private int connectionTimeout = 10;
+    private int defaultTimeout = 60*5;
 
     public String getId() {
         return id;
@@ -92,6 +94,22 @@ public class WebTransfer {
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public int getDefaultTimeout() {
+        return defaultTimeout;
+    }
+
+    public void setDefaultTimeout(int defaultTimeout) {
+        this.defaultTimeout = defaultTimeout;
     }
 
     public WebTransfer() {
