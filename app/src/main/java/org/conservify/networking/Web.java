@@ -169,8 +169,15 @@ public class Web {
                     headers.put(responseHeaders.name(i), responseHeaders.value(i));
                 }
 
+                String body = null;
+                try {
+                    body = response.body().string();
+                } catch (IOException e) {
+                    Log.e(TAG, "error", e);
+                }
+
                 String contentType = responseHeaders.get("content-type");
-                downloadListener.onComplete(id, headers, contentType, null, response.code());
+                downloadListener.onComplete(id, headers, contentType, body, response.code());
             }
         });
 
