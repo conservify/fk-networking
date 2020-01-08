@@ -104,6 +104,7 @@ public class Web {
                 try {
                     sink = Okio.buffer(Okio.sink(new File(transfer.getPath())));
                     sink.writeAll(Okio.source(responseBody.byteStream()));
+                    sink.flush();
 
                     downloadListener.onComplete(id, headers, contentType, null, response.code());
                 }
