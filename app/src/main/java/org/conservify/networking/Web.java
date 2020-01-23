@@ -93,15 +93,8 @@ public class Web {
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
                 Log.i(TAG, "[networking] " + id + " done");
 
-                Map<String, String> headers = new HashMap<String, String>();
-                Headers responseHeaders = response.headers();
-                for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-                    headers.put(responseHeaders.name(i), responseHeaders.value(i));
-                }
-
-                String contentType = response.headers().get("Content-Type");
-
-                ResponseBody responseBody = new ProgressAwareResponseBody(id, response.headers(), response.body(), downloadListener);
+                Headers responseHeaders = response.headers() != null ? response.headers() : Headers.of();
+                ResponseBody responseBody = new ProgressAwareResponseBody(id, responseHeaders, response.body(), downloadListener);
                 BufferedSource bufferedSource = responseBody.source();
                 BufferedSink sink = null;
 
@@ -110,6 +103,11 @@ public class Web {
                     sink.writeAll(Okio.source(responseBody.byteStream()));
                     sink.flush();
 
+                    Map<String, String> headers = new HashMap<String, String>();
+                    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+                        headers.put(responseHeaders.name(i), responseHeaders.value(i));
+                    }
+                    String contentType = responseHeaders.get("Content-Type");
                     downloadListener.onComplete(id, headers, contentType, null, response.code());
                 }
                 catch (IOException e) {
@@ -163,11 +161,7 @@ public class Web {
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
                 Log.i(TAG, "[networking] " + id + " done");
 
-                Map<String, String> headers = new HashMap<String, String>();
-                Headers responseHeaders = response.headers();
-                for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-                    headers.put(responseHeaders.name(i), responseHeaders.value(i));
-                }
+                Headers responseHeaders = response.headers() != null ? response.headers() : Headers.of();
 
                 String body = null;
                 try {
@@ -177,6 +171,10 @@ public class Web {
                 }
 
                 String contentType = responseHeaders.get("content-type");
+                Map<String, String> headers = new HashMap<String, String>();
+                for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+                    headers.put(responseHeaders.name(i), responseHeaders.value(i));
+                }
                 downloadListener.onComplete(id, headers, contentType, body, response.code());
             }
         });
