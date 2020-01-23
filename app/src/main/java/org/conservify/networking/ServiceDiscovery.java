@@ -14,25 +14,11 @@ public class ServiceDiscovery {
     private final Context context;
     private final NetworkingListener networkingListener;
     private final NsdManager.DiscoveryListener discoveryListener;
-    private final NsdManager.ResolveListener resolveListener;
     private final NsdManager nsdManager;
 
     public ServiceDiscovery(Context context, final NetworkingListener networkingListener) {
         this.context = context;
         this.networkingListener = networkingListener;
-
-        resolveListener = new NsdManager.ResolveListener() {
-            @Override
-            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                Log.e(TAG, "Resolve failed: " + errorCode);
-            }
-
-            @Override
-            public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
-                networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
-            }
-        };
 
         discoveryListener = new NsdManager.DiscoveryListener() {
             @Override
@@ -44,7 +30,23 @@ public class ServiceDiscovery {
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 Log.d(TAG, "onServiceFound: " + service + ", resolving...");
-                nsdManager.resolveService(service, resolveListener);
+                try {
+                    nsdManager.resolveService(service, new NsdManager.ResolveListener() {
+                        @Override
+                        public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                            Log.e(TAG, "Resolve failed: " + errorCode);
+                        }
+
+                        @Override
+                        public void onServiceResolved(NsdServiceInfo serviceInfo) {
+                            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
+                            networkingListener.onFoundService(new ServiceInfo(serviceInfo.getServiceName(), serviceInfo.getServiceType(), serviceInfo.getHost().getHostAddress(), serviceInfo.getPort()));
+                        }
+                    });
+                }
+                catch (Exception e) {
+                    Log.e(TAG, "ServiceDiscovery.resolve failed: Error code:", e);
+                }
             }
 
             @Override
@@ -65,15 +67,25 @@ public class ServiceDiscovery {
 
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-                nsdManager.stopServiceDiscovery(this);
+                try {
+                    Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+                    nsdManager.stopServiceDiscovery(this);
+                }
+                catch (Exception e) {
+                    Log.e(TAG, "ServiceDiscovery.stopServiceDiscovery failed: Error code:", e);
+                }
                 networkingListener.onDiscoveryFailed();
             }
 
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-                nsdManager.stopServiceDiscovery(this);
+                try {
+                    Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+                    nsdManager.stopServiceDiscovery(this);
+                }
+                catch (Exception e) {
+                    Log.e(TAG, "ServiceDiscovery.stopServiceDiscovery failed: Error code:", e);
+                }
             }
         };
 
@@ -82,13 +94,23 @@ public class ServiceDiscovery {
 
 
     public void start(String serviceType) {
-        Log.d(TAG, "ServiceDiscovery.start called");
-
-        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        try {
+            Log.d(TAG, "ServiceDiscovery.start called");
+            nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        }
+        catch (Exception e) {
+            Log.e(TAG, "ServiceDiscovery.start failed: Error code:", e);
+            networkingListener.onDiscoveryFailed();
+        }
     }
 
     public void stop() {
-        Log.d(TAG, "ServiceDiscovery.stop");
-        nsdManager.stopServiceDiscovery(discoveryListener);
+        try {
+            Log.d(TAG, "ServiceDiscovery.stop");
+            nsdManager.stopServiceDiscovery(discoveryListener);
+        }
+        catch (Exception e) {
+            Log.e(TAG, "ServiceDiscovery.stop failed: Error code:", e);
+        }
     }
 }

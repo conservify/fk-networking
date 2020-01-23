@@ -134,7 +134,7 @@ public class Web {
     public String upload(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + transfer.getUrl() + " to " + transfer.getPath());
+        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + transfer.getPath() + " to " + transfer.getUrl());
 
         Headers headers = Headers.of(transfer.getHeaders());
         String contentType = headers.get("Content-Type");
