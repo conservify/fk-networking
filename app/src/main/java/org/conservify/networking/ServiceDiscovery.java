@@ -27,14 +27,20 @@ public class ServiceDiscovery {
                 networkingListener.onStarted();
             }
 
-            @Override
-            public void onServiceFound(NsdServiceInfo service) {
-                Log.d(TAG, "onServiceFound: " + service + ", resolving...");
+            private void resolveService(final NsdServiceInfo service) {
                 try {
                     nsdManager.resolveService(service, new NsdManager.ResolveListener() {
                         @Override
                         public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                            Log.e(TAG, "Resolve failed: " + errorCode);
+                            switch (errorCode) {
+                                case NsdManager.FAILURE_ALREADY_ACTIVE:
+                                    Log.e(TAG, "Resolve failed: " + errorCode + ", trying again.");
+                                    resolveService(service);
+                                    break;
+                                default:
+                                    Log.e(TAG, "Resolve failed: " + errorCode);
+                                    break;
+                            }
                         }
 
                         @Override
@@ -47,6 +53,12 @@ public class ServiceDiscovery {
                 catch (Exception e) {
                     Log.e(TAG, "ServiceDiscovery.resolve failed: Error code:", e);
                 }
+            }
+
+            @Override
+            public void onServiceFound(NsdServiceInfo service) {
+                Log.d(TAG, "onServiceFound: " + service + ", resolving...");
+                resolveService(service);
             }
 
             @Override
