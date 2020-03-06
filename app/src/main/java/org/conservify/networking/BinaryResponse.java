@@ -1,5 +1,9 @@
 package org.conservify.networking;
 
+import com.android.volley.NetworkResponse;
+import com.android.volley.Response;
+import com.android.volley.toolbox.HttpHeaderParser;
+
 import java.util.Map;
 
 public class BinaryResponse {
@@ -23,5 +27,10 @@ public class BinaryResponse {
         this.data = data;
         this.statusCode = statusCode;
         this.headers = headers;
+    }
+
+    public static Response<BinaryResponse> fromNetworkResponse(NetworkResponse response) {
+        BinaryResponse br = new BinaryResponse(response.data, response.statusCode, response.headers);
+        return Response.success(br, HttpHeaderParser.parseCacheHeaders(response));
     }
 }

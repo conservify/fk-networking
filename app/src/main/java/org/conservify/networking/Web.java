@@ -4,9 +4,11 @@ import android.content.Context;
 import android.util.Base64;
 import android.util.Log;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.ServerError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 
@@ -189,18 +191,22 @@ public class Web {
 
         String requestBody = transfer.getBody();
 
-        VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
+        final VerboseJsonObjectRequest jsonObjectRequest = new VerboseJsonObjectRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<VerboseJsonObject>() {
             @Override
             public void onResponse(VerboseJsonObject response) {
-                Log.i(TAG, "[networking] " + id + " done");
-
-                String contentType = response.getHeaders().get("content-type");
-                String body = response.getObject() != null ? response.getObject().toString() : null;
-                downloadListener.onComplete(id, response.getHeaders(), contentType, body, response.getStatusCode());
+                invokeListener(transfer, response);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                if (error.networkResponse != null) {
+                    VerboseJsonObject response = VerboseJsonObject.fromNetworkResponse(error.networkResponse).result;
+                    if (response != null) {
+                        invokeListener(transfer, response);
+                        return;
+                    }
+                }
+
                 Log.e(TAG,"[networking] " + id + " failure", error);
                 downloadListener.onError(id, error.getMessage());
             }
@@ -209,6 +215,13 @@ public class Web {
         addToRequestQueue(jsonObjectRequest);
 
         return id;
+    }
+
+    private void invokeListener(final WebTransfer transfer, VerboseJsonObject response) {
+        Log.i(TAG, "[networking] " + transfer.getId() + " done");
+        String contentType = response.getHeaders().get("content-type");
+        String body = response.getObject() != null ? response.getObject().toString() : null;
+        downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
     }
 
     public String binary(final WebTransfer transfer) {
@@ -228,23 +241,20 @@ public class Web {
         BinaryRequest binaryRequest = new BinaryRequest(getMethod(transfer.getMethodOrDefault()), transfer.getUrl(), transfer.getHeaders(), requestBody, new Response.Listener<BinaryResponse>() {
             @Override
             public void onResponse(BinaryResponse response) {
-                Log.i(TAG, "[networking] " + id + " done");
-
-                String contentType = response.getHeaders().get("content-type");
-
-                Object body = null;
-                if (transfer.isBase64EncodeResponseBody()) {
-                    body = Base64.encodeToString(response.getData(), 0);
-                } else {
-                    body = new String(response.getData(), Charset.forName("UTF-8"));
-                }
-
-                downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
+                invokeListener(transfer, response);
 
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                if (error.networkResponse != null) {
+                    BinaryResponse response = BinaryResponse.fromNetworkResponse(error.networkResponse).result;
+                    if (response != null) {
+                        invokeListener(transfer, response);
+                        return;
+                    }
+                }
+
                 Log.e(TAG,"[networking] " + id + " failure", error);
                 downloadListener.onError(id, error.getMessage());
             }
@@ -253,6 +263,21 @@ public class Web {
         addToRequestQueue(binaryRequest);
 
         return id;
+    }
+
+    private void invokeListener(final WebTransfer transfer, BinaryResponse response) {
+        Log.i(TAG, "[networking] " + transfer.getId() + " done");
+
+        String contentType = response.getHeaders().get("content-type");
+
+        Object body = null;
+        if (transfer.isBase64EncodeResponseBody()) {
+            body = Base64.encodeToString(response.getData(), 0);
+        } else {
+            body = new String(response.getData(), Charset.forName("UTF-8"));
+        }
+
+        downloadListener.onComplete(transfer.getId(), response.getHeaders(), contentType, body, response.getStatusCode());
     }
 
     private int getMethod(String method) {

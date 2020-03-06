@@ -27,8 +27,7 @@ public class BinaryRequest extends Request<BinaryResponse> {
 
     @Override
     protected Response<BinaryResponse> parseNetworkResponse(NetworkResponse response) {
-        BinaryResponse br = new BinaryResponse(response.data, response.statusCode, response.headers);
-        return Response.success(br, HttpHeaderParser.parseCacheHeaders(response));
+        return BinaryResponse.fromNetworkResponse(response);
     }
 
     @Override
