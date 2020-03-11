@@ -22,6 +22,12 @@ public class FileUploadRequestBody extends RequestBody {
     private final WebTransferListener uploadListener;
 
     public FileUploadRequestBody(String taskId, File file, String contentType, WebTransferListener uploadListener) {
+        if (file == null) {
+            throw new IllegalArgumentException("file");
+        }
+        if (uploadListener == null) {
+            throw new IllegalArgumentException("file");
+        }
         this.taskId = taskId;
         this.file = file;
         this.contentType = contentType;
@@ -70,7 +76,9 @@ public class FileUploadRequestBody extends RequestBody {
             uploadListener.onProgress(taskId, headers, copied, file.length());
         }
         finally {
-            Util.closeQuietly(source);
+            if (source != null) {
+                Util.closeQuietly(source);
+            }
         }
     }
 }
