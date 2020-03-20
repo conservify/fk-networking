@@ -10,8 +10,8 @@ import static org.junit.Assert.*;
 public class FileSystemTest {
     @Test
     public void test_opening_file() {
-        FileSystem fs = new FileSystem(null, null);
-        MetaFile meta = fs.openMeta("/home/jlewallen/fieldkit/stations/ancient_goose_81/20191024_153709_meta.fkpb");
-        meta.readAll(new ReadOptions());
+        // FileSystem fs = new FileSystem(null, null);
+        // MetaFile meta = fs.openMeta("/home/jlewallen/fieldkit/stations/ancient_goose_81/20191024_153709_meta.fkpb");
+        // meta.readAll(new ReadOptions());
     }
 }
