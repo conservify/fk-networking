@@ -34,7 +34,6 @@ public class FileSystemTest {
         FileSystem fs = new FileSystem( listener);
         PbFile meta = fs.open(file.getAbsolutePath());
         assertTrue(meta.readInfo("token"));
-        assertTrue(meta.readDataRecords("token", new ReadOptions()));
         assertTrue(meta.readDelimited("token", new ReadOptions()));
     }
 }

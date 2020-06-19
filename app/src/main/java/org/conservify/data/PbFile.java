@@ -1,6 +1,7 @@
 package org.conservify.data;
 
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.protobuf.CodedInputStream;
@@ -163,7 +164,12 @@ public class PbFile {
                         byte[] data = new byte[recordSize];
                         int bytesRead = fis.read(data);
 
-                        records.add(data);
+                        if (this.options.isBase64EncodeData()) {
+                            records.add(Base64.encodeToString(data, 0));
+                        }
+                        else {
+                            records.add(data);
+                        }
 
                         if (records.size() == options.getBatchSize()) {
                             file.listener.onFileRecords(file.path, this.token, fis.getChannel().position(), size, records);
