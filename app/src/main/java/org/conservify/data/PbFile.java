@@ -1,13 +1,10 @@
-package org.conservify.data.pb;
+package org.conservify.data;
 
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.protobuf.CodedInputStream;
 
-import org.conservify.data.FileInfo;
-import org.conservify.data.FileSystemListener;
-import org.conservify.data.ReadOptions;
 import org.conservify.fieldkit.data.pb.FkData;
 
 import java.io.File;
@@ -130,11 +127,12 @@ public class PbFile {
         }
     }
 
-    public boolean readDataRecords(String token, ReadOptions options) {
+    private boolean readDataRecords(String token, ReadOptions options) {
         ReadRecordsTask task = new ReadRecordsTask(token, this, options);
         task.execute(this);
         return true;
     }
+
     private class ReadDelimitedTask extends AsyncTask<PbFile, Void, Boolean> {
         private final String token;
         private final PbFile file;

@@ -5,7 +5,7 @@ import org.conservify.data.FileSystem;
 import org.conservify.data.ReadOptions;
 import org.conservify.data.FileSystemListener;
 import org.conservify.data.SampleData;
-import org.conservify.data.pb.PbFile;
+import org.conservify.data.PbFile;
 import org.junit.Test;
 
 import java.io.File;

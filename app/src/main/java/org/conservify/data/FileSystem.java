@@ -2,8 +2,6 @@ package org.conservify.data;
 
 import android.content.Context;
 
-import org.conservify.data.pb.PbFile;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FileSystem {
