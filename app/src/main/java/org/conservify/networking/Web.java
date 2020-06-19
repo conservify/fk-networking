@@ -35,7 +35,6 @@ import okio.Okio;
 public class Web {
     private static final String TAG = "JS";
 
-    private final AtomicLong tokens = new AtomicLong();
     private final Context context;
     private final WebTransferListener uploadListener;
     private final WebTransferListener downloadListener;
@@ -49,10 +48,6 @@ public class Web {
         this.uploadListener = uploadListener;
         this.downloadListener = downloadListener;
         this.requestQueue = Volley.newRequestQueue(this.context);
-    }
-
-    public String newToken() {
-        return "cfynw-" + tokens.incrementAndGet();
     }
 
     public <T> void addToRequestQueue(Request<T> req) {

@@ -3,6 +3,7 @@ package org.conservify.networking;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class WebTransfer {
     private String id;
@@ -112,16 +113,22 @@ public class WebTransfer {
         this.defaultTimeout = defaultTimeout;
     }
 
+    private static final AtomicLong tokens = new AtomicLong();
+
+    public static String newToken() {
+        return "cfynw-" + tokens.incrementAndGet();
+    }
+
     public WebTransfer() {
-        this.id = UUID.randomUUID().toString();
+        this.id = newToken();
     }
 
     public WebTransfer(String url) {
-        this.id = UUID.randomUUID().toString();
+        this.id = newToken();
     }
 
     public WebTransfer(String url, String path, Map<String, String> headers) {
-        this.id = UUID.randomUUID().toString();
+        this.id = newToken();
         this.url = url;
         this.path = path;
         this.headers = headers;
