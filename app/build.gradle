@@ -23,7 +23,6 @@ dependencies {
     implementation 'com.android.volley:volley:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.google.protobuf:protobuf-javalite:3.9.1'
-    // implementation 'com.google.protobuf:protobuf-java-util:3.9.2'
     implementation "com.squareup.okhttp3:okhttp:4.2.1"
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

@@ -2,30 +2,18 @@ package org.conservify.data;
 
 public class FileInfo {
     private final String file;
-    private final int size;
-    private final int firstRecord;
-    private final int lastRecord;
+    private final long size;
 
     public String getFile() {
         return file;
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 
-    public int getFirstRecord() {
-        return firstRecord;
-    }
-
-    public int getLastRecord() {
-        return lastRecord;
-    }
-
-    public FileInfo(String file, int size, int firstRecord, int lastRecord) {
+    public FileInfo(String file, long size) {
         this.file = file;
         this.size = size;
-        this.firstRecord = firstRecord;
-        this.lastRecord = lastRecord;
     }
 }
