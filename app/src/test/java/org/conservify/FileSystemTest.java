@@ -3,7 +3,7 @@ package org.conservify;
 import org.conservify.data.FileInfo;
 import org.conservify.data.FileSystem;
 import org.conservify.data.ReadOptions;
-import org.conservify.data.RecordListener;
+import org.conservify.data.FileSystemListener;
 import org.conservify.data.SampleData;
 import org.conservify.data.pb.PbFile;
 import org.junit.Test;
@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 public class FileSystemTest {
     @Test
     public void test_opening_file() {
-        RecordListener listener = new RecordListener() {
+        FileSystemListener listener = new FileSystemListener() {
             @Override
             public void onFileInfo(String path, String token, FileInfo info) {
             }

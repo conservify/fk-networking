@@ -9,14 +9,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FileSystem {
     private final AtomicLong tokens = new AtomicLong();
     private final Context context;
-    private final RecordListener listener;
+    private final FileSystemListener listener;
 
-    public FileSystem(Context context, RecordListener listener) {
+    public FileSystem(Context context, FileSystemListener listener) {
         this.context = context;
         this.listener = listener;
     }
 
-    public FileSystem(RecordListener listener) {
+    public FileSystem(FileSystemListener listener) {
         this.context = null;
         this.listener = listener;
     }

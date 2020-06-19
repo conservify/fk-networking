@@ -6,7 +6,7 @@ import android.util.Log;
 import com.google.protobuf.CodedInputStream;
 
 import org.conservify.data.FileInfo;
-import org.conservify.data.RecordListener;
+import org.conservify.data.FileSystemListener;
 import org.conservify.data.ReadOptions;
 import org.conservify.fieldkit.data.pb.FkData;
 
@@ -19,10 +19,10 @@ import java.util.List;
 public class PbFile {
     private static final String TAG = "JS";
 
-    private final RecordListener listener;
+    private final FileSystemListener listener;
     private final String path;
 
-    public PbFile(RecordListener listener, String path) {
+    public PbFile(FileSystemListener listener, String path) {
         this.listener = listener;
         this.path = path;
     }
