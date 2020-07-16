@@ -1,5 +1,7 @@
 package org.conservify.networking;
 
+import android.util.Log;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,8 @@ import okio.Okio;
 import okio.Source;
 
 public class FileUploadRequestBody extends RequestBody {
+    private static final String TAG = "JS";
+
     private final String taskId;
     private final File file;
     private final String contentType;
@@ -62,18 +66,24 @@ public class FileUploadRequestBody extends RequestBody {
 
             uploadListener.onProgress(taskId, headers, 0, file.length());
 
-            while ((read = source.read(bufferedSink.getBuffer(), 4096)) != -1) {
-                copied += read;
+            try {
+                while ((read = source.read(bufferedSink.getBuffer(), 4096)) != -1) {
+                    copied += read;
 
-                bufferedSink.flush();
+                    bufferedSink.flush();
 
-                if (System.currentTimeMillis() - lastProgress > 500) {
-                    uploadListener.onProgress(taskId, headers, copied, file.length());
-                    lastProgress = System.currentTimeMillis();
+                    if (System.currentTimeMillis() - lastProgress > 500) {
+                        uploadListener.onProgress(taskId, headers, copied, file.length());
+                        lastProgress = System.currentTimeMillis();
+                    }
                 }
             }
-
-            uploadListener.onProgress(taskId, headers, copied, file.length());
+            catch (Exception e) {
+                Log.e(TAG, "[networking] " + taskId + " copying failure", e);
+            }
+            finally {
+                uploadListener.onProgress(taskId, headers, copied, file.length());
+            }
         }
         finally {
             if (source != null) {
