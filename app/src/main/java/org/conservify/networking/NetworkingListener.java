@@ -2,6 +2,7 @@ package org.conservify.networking;
 
 public interface NetworkingListener {
     void onStarted();
+    void onStopped();
 
     void onDiscoveryFailed();
     void onFoundService(ServiceInfo service);

@@ -27,6 +27,12 @@ public class ServiceDiscovery {
                 networkingListener.onStarted();
             }
 
+            @Override
+            public void onDiscoveryStopped(String serviceType) {
+                Log.i(TAG, "Discovery stopped: " + serviceType);
+                networkingListener.onStopped();
+            }
+
             private void resolveService(final NsdServiceInfo service) {
                 try {
                     nsdManager.resolveService(service, new NsdManager.ResolveListener() {
@@ -73,11 +79,6 @@ public class ServiceDiscovery {
             }
 
             @Override
-            public void onDiscoveryStopped(String serviceType) {
-                Log.i(TAG, "Discovery stopped: " + serviceType);
-            }
-
-            @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
                 try {
                     Log.e(TAG, "Discovery failed: Error code:" + errorCode);
@@ -103,7 +104,6 @@ public class ServiceDiscovery {
 
         nsdManager = (NsdManager)context.getSystemService(Context.NSD_SERVICE);
     }
-
 
     public void start(String serviceType) {
         try {
