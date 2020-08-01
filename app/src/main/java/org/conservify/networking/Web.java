@@ -39,6 +39,7 @@ public class Web {
     private final WebTransferListener uploadListener;
     private final WebTransferListener downloadListener;
     private final RequestQueue requestQueue;
+    private final Boolean verboseErrors = false;
 
     public Web(Context context, WebTransferListener uploadListener, WebTransferListener downloadListener) {
         if (uploadListener == null) throw new IllegalArgumentException();
@@ -89,7 +90,11 @@ public class Web {
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.e(TAG, "[networking] " + id + " failure", e);
+                if (verboseErrors ) {
+                    Log.e(TAG, "[networking] " + id + " failure", e);
+                } else {
+                    Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
+                }
             }
 
             @Override
@@ -114,7 +119,12 @@ public class Web {
                     downloadListener.onComplete(id, headers, contentType, null, response.code());
                 }
                 catch (IOException e) {
-                    Log.e(TAG, "[networking] " + id + " failure", e);
+                    if (verboseErrors ) {
+                        Log.e(TAG, "[networking] " + id + " failure", e);
+                    }
+                    else {
+                        Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
+                    }
                     downloadListener.onError(id, e.getMessage());
                 }
                 finally {
@@ -156,7 +166,12 @@ public class Web {
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.e(TAG, "[networking] " + id + " failure", e);
+                if (verboseErrors ) {
+                    Log.e(TAG, "[networking] " + id + " failure", e);
+                }
+                else {
+                    Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
+                }
                 downloadListener.onError(id, e.getMessage());
             }
 
@@ -208,7 +223,12 @@ public class Web {
                     }
                 }
 
-                Log.e(TAG,"[networking] " + id + " failure", error);
+                if (verboseErrors ) {
+                    Log.e(TAG, "[networking] " + id + " failure", error);
+                }
+                else {
+                    Log.e(TAG, "[networking] " + id + " failure: " + error.getMessage());
+                }
                 downloadListener.onError(id, error.getMessage());
             }
         });
@@ -256,7 +276,12 @@ public class Web {
                     }
                 }
 
-                Log.e(TAG,"[networking] " + id + " failure", error);
+                if (verboseErrors) {
+                    Log.e(TAG,"[networking] " + id + " failure", error);
+                }
+                else {
+                    Log.e(TAG,"[networking] " + id + " failure: " + error.getMessage());
+                }
                 downloadListener.onError(id, error.getMessage());
             }
         });
