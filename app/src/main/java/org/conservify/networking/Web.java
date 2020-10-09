@@ -95,6 +95,7 @@ public class Web {
                 } else {
                     Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
                 }
+                downloadListener.onError(id, e.getMessage());
             }
 
             @Override
@@ -172,7 +173,7 @@ public class Web {
                 else {
                     Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
                 }
-                downloadListener.onError(id, e.getMessage());
+                uploadListener.onError(id, e.getMessage());
             }
 
             @Override
@@ -193,7 +194,7 @@ public class Web {
                 for (int i = 0, size = responseHeaders.size(); i < size; i++) {
                     headers.put(responseHeaders.name(i), responseHeaders.value(i));
                 }
-                downloadListener.onComplete(id, headers, contentType, body, response.code());
+                uploadListener.onComplete(id, headers, contentType, body, response.code());
             }
         });
 
