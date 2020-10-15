@@ -16,7 +16,7 @@ public class WebTransfer {
     private boolean base64DecodeRequestBody;
     private boolean base64EncodeResponseBody;
     private int connectionTimeout = 10;
-    private int defaultTimeout = 60*5;
+    private int defaultTimeout = 10;
 
     public String getId() {
         return id;

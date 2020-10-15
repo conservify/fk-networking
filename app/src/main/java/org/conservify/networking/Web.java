@@ -90,7 +90,7 @@ public class Web {
         okClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                if (verboseErrors ) {
+                if (verboseErrors) {
                     Log.e(TAG, "[networking] " + id + " failure", e);
                 } else {
                     Log.e(TAG, "[networking] " + id + " failure: " + e.getMessage());
@@ -100,8 +100,6 @@ public class Web {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
-                Log.i(TAG, "[networking] " + id + " done");
-
                 Headers responseHeaders = response.headers() != null ? response.headers() : Headers.of();
                 ResponseBody responseBody = new ProgressAwareResponseBody(id, responseHeaders, response.body(), downloadListener);
                 BufferedSource bufferedSource = responseBody.source();
@@ -118,9 +116,11 @@ public class Web {
                     }
                     String contentType = responseHeaders.get("Content-Type");
                     downloadListener.onComplete(id, headers, contentType, null, response.code());
+
+                    Log.i(TAG, "[networking] " + id + " done");
                 }
                 catch (IOException e) {
-                    if (verboseErrors ) {
+                    if (verboseErrors) {
                         Log.e(TAG, "[networking] " + id + " failure", e);
                     }
                     else {
@@ -129,6 +129,7 @@ public class Web {
                     downloadListener.onError(id, e.getMessage());
                 }
                 finally {
+                    Log.e(TAG, "[networking] " + id + " finally");
                     if (sink != null) {
                         try {
                             sink.close();
@@ -178,8 +179,6 @@ public class Web {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) {
-                Log.i(TAG, "[networking] " + id + " done");
-
                 Headers responseHeaders = response.headers() != null ? response.headers() : Headers.of();
 
                 String body = null;
@@ -195,6 +194,8 @@ public class Web {
                     headers.put(responseHeaders.name(i), responseHeaders.value(i));
                 }
                 uploadListener.onComplete(id, headers, contentType, body, response.code());
+
+                Log.i(TAG, "[networking] " + id + " done");
             }
         });
 
