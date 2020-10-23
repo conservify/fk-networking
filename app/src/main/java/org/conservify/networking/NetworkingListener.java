@@ -9,4 +9,6 @@ public interface NetworkingListener {
     void onLostService(ServiceInfo service);
 
     void onNetworkStatus(NetworkingStatus status);
+
+    void onSimpleDiscovery(ServiceInfo service);
 }
