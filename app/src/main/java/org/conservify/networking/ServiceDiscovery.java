@@ -154,12 +154,15 @@ public class ServiceDiscovery {
         try {
             Log.d(TAG, "ServiceDiscovery.start called");
             if (!initialized) {
-                Log.d(TAG, "ServiceDiscovery.registering");
-                NsdServiceInfo info = new NsdServiceInfo();
-                info.setServiceName("jacob-phone");
-                info.setServiceType("_http._tcp");
-                info.setPort(80);
-                nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+                if (false) {
+                    Log.d(TAG, "ServiceDiscovery.registering");
+
+                    NsdServiceInfo info = new NsdServiceInfo();
+                    info.setServiceName("jacob-phone");
+                    info.setServiceType("_fk._tcp");
+                    info.setPort(80);
+                    nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+                }
 
                 Log.d(TAG, "ServiceDiscovery.listeners");
                 // listenTask = new ListenForStationTask();
@@ -256,7 +259,8 @@ public class ServiceDiscovery {
                                 String remoteAddress = remote.getHostAddress();
                                 String encoded = Base64.encodeToString(data, 0, packet.getLength(), Base64.NO_WRAP);
                                 Log.i(TAG, "udp! " + packet.getLength() + " " + remoteAddress + " " + encoded + " len=" + encoded.length());
-                                networkingListener.onSimpleDiscovery(new ServiceInfo(encoded, "udp", remoteAddress, 80));
+                                JavaUdpMessage message = new JavaUdpMessage(remoteAddress, encoded);
+                                networkingListener.onUdpMessage(message);
                             }
                         }
                     }

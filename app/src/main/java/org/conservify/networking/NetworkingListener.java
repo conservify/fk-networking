@@ -10,5 +10,5 @@ public interface NetworkingListener {
 
     void onNetworkStatus(NetworkingStatus status);
 
-    void onSimpleDiscovery(ServiceInfo service);
+    void onUdpMessage(JavaUdpMessage message);
 }
