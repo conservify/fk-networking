@@ -146,32 +146,39 @@ public class ServiceDiscovery {
         nsdManager = (NsdManager)context.getSystemService(Context.NSD_SERVICE);
     }
 
+    private ListenForStationDirectTask listenDirectTask;
     private ListenForStationGroupTask listenGroupTask;
-    private ListenForStationTask listenTask;
-    private boolean initialized;
+    private boolean registered = false;
 
-    public void start(String serviceType) {
+    public void start(String serviceTypeSearch, String serviceNameSelf, String serviceTypeSelf) {
         try {
             Log.d(TAG, "ServiceDiscovery.start called");
-            if (!initialized) {
-                if (false) {
-                    Log.d(TAG, "ServiceDiscovery.registering");
 
-                    NsdServiceInfo info = new NsdServiceInfo();
-                    info.setServiceName("jacob-phone");
-                    info.setServiceType("_fk._tcp");
-                    info.setPort(80);
-                    nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-                }
-
-                Log.d(TAG, "ServiceDiscovery.listeners");
-                // listenTask = new ListenForStationTask();
-                // listenTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            if (listenGroupTask == null) {
+                Log.d(TAG, "ServiceDiscovery.listeners udp-g");
                 listenGroupTask = new ListenForStationGroupTask();
                 listenGroupTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-                initialized = true;
             }
-            nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+
+            if (listenDirectTask == null) {
+                Log.d(TAG, "ServiceDiscovery.listeners udp-d");
+                listenDirectTask = new ListenForStationDirectTask();
+                listenDirectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            }
+
+            if (!registered && serviceNameSelf != null && serviceNameSelf.length() > 0 && serviceTypeSelf != null && serviceTypeSelf.length() > 0) {
+                Log.d(TAG, "ServiceDiscovery.registering: " + serviceTypeSelf + " " + serviceNameSelf);
+                NsdServiceInfo info = new NsdServiceInfo();
+                info.setServiceName(serviceNameSelf);
+                info.setServiceType(serviceTypeSelf);
+                info.setPort(UdpGroupPort);
+                nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+                registered = true;
+            }
+
+            if (serviceTypeSearch != null && serviceTypeSearch.length() > 0) {
+                nsdManager.discoverServices(serviceTypeSearch, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+            }
         }
         catch (Exception e) {
             Log.e(TAG, "ServiceDiscovery.start failed: Error code:", e);
@@ -189,22 +196,44 @@ public class ServiceDiscovery {
         }
     }
 
-    public class ListenForStationTask extends AsyncTask<Void,Void, Boolean> {
+	private static final String UdpMulticastGroup = "224.1.2.3";
+	private static final short UdpGroupPort = 22143;
+    private static final short UdpDirectPort = UdpGroupPort + 1;
+	private static final int UdpMaximumPacketSize = 512;
+
+    public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
         @Override
         protected Boolean doInBackground(Void... voids) {
             try {
-                Log.i(TAG,"udp: listening: " + 11000);
+                Log.i(TAG, "udp: listening " + "local:" + UdpDirectPort);
                 try {
-                    byte[] buffer = new byte[2048];
+                    byte[] buffer = new byte[UdpMaximumPacketSize];
                     MulticastSocket socket = new MulticastSocket(null);
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    SocketAddress socketAddress = new InetSocketAddress(11000);
+                    SocketAddress socketAddress = new InetSocketAddress(UdpDirectPort);
                     socket.setReuseAddress(true);
                     socket.bind(socketAddress);
 
                     while (true) {
                         socket.receive(packet);
-                        Log.i(TAG,"udp: received: " + packet.getLength());
+
+                        if (packet.getLength() == 0) {
+                            Log.w(TAG, "udp: unexpected empty packet");
+                            continue;
+                        }
+
+                        if (packet.getLength() == UdpMaximumPacketSize) {
+                            Log.w(TAG, "udp: unexpected huge packet");
+                            continue;
+                        }
+
+                        byte[] data = packet.getData();
+                        InetAddress remote = packet.getAddress();
+                        String remoteAddress = remote.getHostAddress();
+                        String encoded = Base64.encodeToString(data, 0, packet.getLength(), Base64.NO_WRAP);
+                        Log.i(TAG, "udp: length=" + packet.getLength() + " " + remoteAddress +
+                                " b64=" + encoded + " encoded-length=" + encoded.length());
+                        networkingListener.onUdpMessage(new JavaUdpMessage(remoteAddress, encoded));
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "ServiceDiscovery.udp failed: Error code:", e);
@@ -234,34 +263,37 @@ public class ServiceDiscovery {
                 wifiLock.acquire();
                 multicastLock.acquire();
 
-                Log.i(TAG, "udp: listening: " + 22143);
+                Log.i(TAG, "udp: listening " + UdpMulticastGroup + ":" + UdpGroupPort);
 
                 try {
-                    MulticastSocket socket = new MulticastSocket(22143);
-
-                    InetAddress group = InetAddress.getByName("224.1.2.3");
+                    MulticastSocket socket = new MulticastSocket(UdpGroupPort);
+                    InetAddress group = InetAddress.getByName(UdpMulticastGroup);
                     socket.joinGroup(group);
 
                     try {
-                        DatagramPacket packet;
-                        byte[] buf = new byte[256];
-                        packet = new DatagramPacket(buf, buf.length);
+                        byte[] buffer = new byte[UdpMaximumPacketSize];
+                        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
                         while (true) {
                             socket.receive(packet);
 
                             if (packet.getLength() == 0) {
                                 Log.w(TAG, "udp: unexpected empty packet");
+								continue;
                             }
-                            else {
-                                byte[] data = packet.getData();
-                                InetAddress remote = packet.getAddress();
-                                String remoteAddress = remote.getHostAddress();
-                                String encoded = Base64.encodeToString(data, 0, packet.getLength(), Base64.NO_WRAP);
-                                Log.i(TAG, "udp! " + packet.getLength() + " " + remoteAddress + " " + encoded + " len=" + encoded.length());
-                                JavaUdpMessage message = new JavaUdpMessage(remoteAddress, encoded);
-                                networkingListener.onUdpMessage(message);
+
+                            if (packet.getLength() == UdpMaximumPacketSize) {
+                                Log.w(TAG, "udp: unexpected huge packet");
+								continue;
                             }
+
+							byte[] data = packet.getData();
+							InetAddress remote = packet.getAddress();
+							String remoteAddress = remote.getHostAddress();
+							String encoded = Base64.encodeToString(data, 0, packet.getLength(), Base64.NO_WRAP);
+							Log.i(TAG, "udp: length=" + packet.getLength() + " " + remoteAddress +
+								  " b64=" + encoded + " encoded-length=" + encoded.length());
+							networkingListener.onUdpMessage(new JavaUdpMessage(remoteAddress, encoded));
                         }
                     }
                     finally {
