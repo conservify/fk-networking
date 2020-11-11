@@ -12,7 +12,7 @@ public class WebTransfer {
     private String path;
     private Map<String, String> headers = new HashMap<String, String>();
     private String body;
-    private boolean copy;
+    private boolean uploadCopy;
     private String contentType;
     private boolean base64DecodeRequestBody;
     private boolean base64EncodeResponseBody;
@@ -74,12 +74,12 @@ public class WebTransfer {
         this.body = body;
     }
 
-    public boolean isCopy() {
-        return copy;
+    public boolean isUploadCopy() {
+        return uploadCopy;
     }
 
-    public void setCopy(boolean copy) {
-        this.copy = copy;
+    public void setUploadCopy(boolean uploadCopy) {
+        this.uploadCopy = uploadCopy;
     }
 
     public boolean isBase64DecodeRequestBody() {

@@ -172,11 +172,12 @@ public class Web {
 
         String uploading = transfer.getPath();
 
-        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + uploading + " to " + transfer.getUrl() + " " + transfer.isCopy());
+        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + uploading + " to " + transfer.getUrl() + " " + transfer.isUploadCopy());
 
-        if (transfer.isCopy()) {
+        if (transfer.isUploadCopy()) {
             try {
                 File temporary = File.createTempFile("upload-",".temp", this.context.getCacheDir());
+                temporary.deleteOnExit();
                 copy(new File(transfer.getPath()), temporary);
                 Log.e(TAG, "[networking] " + id + " copied: " + temporary);
                 uploading = temporary.getAbsolutePath();
