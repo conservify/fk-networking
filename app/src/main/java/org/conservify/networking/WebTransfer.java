@@ -12,6 +12,7 @@ public class WebTransfer {
     private String path;
     private Map<String, String> headers = new HashMap<String, String>();
     private String body;
+    private boolean copy;
     private String contentType;
     private boolean base64DecodeRequestBody;
     private boolean base64EncodeResponseBody;
@@ -71,6 +72,14 @@ public class WebTransfer {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public boolean isCopy() {
+        return copy;
+    }
+
+    public void setCopy(boolean copy) {
+        this.copy = copy;
     }
 
     public boolean isBase64DecodeRequestBody() {

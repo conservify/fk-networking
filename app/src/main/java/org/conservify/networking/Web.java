@@ -15,8 +15,13 @@ import com.android.volley.toolbox.Volley;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -144,14 +149,48 @@ public class Web {
         return id;
     }
 
+    public static void copy(File source, File destiny) throws IOException {
+        InputStream is = new FileInputStream(source);
+        try {
+            OutputStream os = new FileOutputStream(destiny);
+            try {
+                byte[] buf = new byte[32768];
+                int len;
+                while ((len = is.read(buf)) > 0) {
+                    os.write(buf, 0, len);
+                }
+            } finally {
+                os.close();
+            }
+        } finally {
+            is.close();
+        }
+    }
+
     public String upload(final WebTransfer transfer) {
         final String id = transfer.getId();
 
-        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + transfer.getPath() + " to " + transfer.getUrl());
+        String uploading = transfer.getPath();
+
+        Log.e(TAG, "[networking] " + id + " upload: " + transfer.getMethodOrDefault() + " " + uploading + " to " + transfer.getUrl() + " " + transfer.isCopy());
+
+        if (transfer.isCopy()) {
+            try {
+                File temporary = File.createTempFile("upload-",".temp", this.context.getCacheDir());
+                copy(new File(transfer.getPath()), temporary);
+                Log.e(TAG, "[networking] " + id + " copied: " + temporary);
+                uploading = temporary.getAbsolutePath();
+            }
+            catch (IOException e) {
+                Log.e(TAG, "error", e);
+                uploadListener.onError(id, e.getMessage());
+                return id;
+            }
+        }
 
         Headers headers = Headers.of(transfer.getHeaders());
         String contentType = headers.get("Content-Type");
-        RequestBody requestBody = new FileUploadRequestBody(id, new File(transfer.getPath()), contentType, uploadListener);
+        RequestBody requestBody = new FileUploadRequestBody(id, new File(uploading), contentType, uploadListener);
 
         okhttp3.Request request = new okhttp3.Request.Builder()
                 .method(transfer.getMethodOrDefault(), requestBody)
