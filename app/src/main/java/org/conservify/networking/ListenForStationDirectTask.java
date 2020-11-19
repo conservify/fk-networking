@@ -17,23 +17,34 @@ import java.net.SocketTimeoutException;
 public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
     private static final String TAG = "JS";
     private final NetworkingListener networkingListener;
+    private final DispatchGroup sync;
+    private boolean running;
 
-    public ListenForStationDirectTask(NetworkingListener networkingListener) {
+    public ListenForStationDirectTask(NetworkingListener networkingListener, DispatchGroup sync) {
         this.networkingListener = networkingListener;
+        this.sync = sync;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
     protected Boolean doInBackground(Void... voids) {
         try {
             Log.i(TAG, "ServiceDiscovery.udp-d: listening " + "local:" + ServiceDiscovery.UdpDirectPort);
+            running = true;
             try {
                 byte[] buffer = new byte[ServiceDiscovery.UdpMaximumPacketSize];
                 MulticastSocket socket = new MulticastSocket(null);
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 SocketAddress socketAddress = new InetSocketAddress(ServiceDiscovery.UdpDirectPort);
                 socket.setReuseAddress(true);
-                socket.bind(socketAddress);
                 socket.setSoTimeout(1000);
+
+                socket.bind(socketAddress);
+
+                sync.leave();
 
                 while (!isCancelled()) {
                     try {
@@ -62,6 +73,9 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
                         Log.d(TAG, "ServiceDiscovery.udp-d: to");
                     }
                 }
+
+                running = false;
+                sync.leave();
             } catch (Exception e) {
                 Log.e(TAG, "ServiceDiscovery.udp-d: failed: Error code:", e);
             }

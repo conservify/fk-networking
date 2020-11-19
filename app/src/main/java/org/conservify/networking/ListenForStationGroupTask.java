@@ -24,10 +24,17 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
     private static final String TAG = "JS";
     private final NetworkingListener networkingListener;
     private final Context context;
+    private final DispatchGroup sync;
+    private boolean running;
 
-    public ListenForStationGroupTask(NetworkingListener networkingListener, Context context) {
+    public ListenForStationGroupTask(NetworkingListener networkingListener, Context context, DispatchGroup sync) {
         this.networkingListener = networkingListener;
         this.context = context;
+        this.sync = sync;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     public NetworkInterface getLocalIpAddress() {
@@ -53,6 +60,8 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
         try {
             Log.i(TAG, "ServiceDiscovery.udp-g: starting, acquiring wifi locks");
 
+            running = true;
+
             WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
             WifiManager.WifiLock wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, TAG);
             WifiManager.MulticastLock multicastLock = wifiManager.createMulticastLock(TAG);
@@ -67,6 +76,9 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                 MulticastSocket socket = new MulticastSocket(ServiceDiscovery.UdpGroupPort);
                 InetAddress group = InetAddress.getByName(ServiceDiscovery.UdpMulticastGroup);
 
+                socket.setSoTimeout(1000);
+                socket.setReuseAddress(true);
+
                 NetworkInterface hostInterface = getLocalIpAddress();
                 if (hostInterface != null) {
                     try {
@@ -76,15 +88,15 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                     }
                     final SocketAddress multicastAddr = new InetSocketAddress(group, ServiceDiscovery.UdpGroupPort);
 
-                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup({}, {})", multicastAddr, hostInterface));
+                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup(%s %s)", multicastAddr, hostInterface));
 
                     socket.joinGroup(multicastAddr, hostInterface);
                 } else {
-                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup({})", group));
+                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup(%s)", group));
                     socket.joinGroup(group);
                 }
 
-                socket.setSoTimeout(1000);
+                sync.leave();
 
                 try {
                     byte[] buffer = new byte[ServiceDiscovery.UdpMaximumPacketSize];
@@ -116,6 +128,9 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                             Log.d(TAG, "ServiceDiscovery.udp-g: to");
                         }
                     }
+
+                    running = false;
+                    sync.leave();
                 }
                 finally {
                     Log.i(TAG, "ServiceDiscovery.udp-g: shutting down");
