@@ -77,14 +77,15 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
                 running = false;
                 sync.leave();
             } catch (Exception e) {
-                Log.e(TAG, "ServiceDiscovery.udp-d: failed: Error code:", e);
+                Log.e(TAG, "ServiceDiscovery.udp-d: failed: error:", e);
             }
 
             Log.i(TAG,"ServiceDiscovery.udp-d: stopped");
 
             return true;
         } catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.udp-d: failed: Error code:", e);
+            Log.e(TAG, "ServiceDiscovery.udp-d: failed: error:", e);
+            running = false;
             return false;
         }
     }
