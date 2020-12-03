@@ -213,18 +213,23 @@ public class ServiceDiscovery {
                 Log.d(TAG, "ServiceDiscovery listeners udp-d already running");
             }
 
-            if (!registered && serviceNameSelf != null && serviceNameSelf.length() > 0 && serviceTypeSelf != null && serviceTypeSelf.length() > 0) {
-                Log.d(TAG, "ServiceDiscovery registering: " + serviceTypeSelf + " " + serviceNameSelf);
-                NsdServiceInfo info = new NsdServiceInfo();
-                info.setServiceName(serviceNameSelf);
-                info.setServiceType(serviceTypeSelf);
-                info.setPort(UdpGroupPort);
-                dg.enter();
-                nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-                registered = true;
+            if (serviceNameSelf != null && serviceNameSelf.length() > 0 && serviceTypeSelf != null && serviceTypeSelf.length() > 0) {
+                if (!registered) {
+                    Log.d(TAG, "ServiceDiscovery registering: " + serviceTypeSelf + " " + serviceNameSelf);
+                    NsdServiceInfo info = new NsdServiceInfo();
+                    info.setServiceName(serviceNameSelf);
+                    info.setServiceType(serviceTypeSelf);
+                    info.setPort(UdpGroupPort);
+                    dg.enter();
+                    nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+                    registered = true;
+                }
+                else {
+                    Log.d(TAG, "ServiceDiscovery already registered");
+                }
             }
             else {
-                Log.d(TAG, "ServiceDiscovery already registered");
+                Log.d(TAG, "ServiceDiscovery registering skipped");
             }
 
             dg.notify(new Runnable() {
