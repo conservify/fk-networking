@@ -130,9 +130,6 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                             Log.d(TAG, "ServiceDiscovery.udp-g: to");
                         }
                     }
-
-                    running = false;
-                    sync.leave();
                 }
                 finally {
                     Log.i(TAG, "ServiceDiscovery.udp-g: shutting down");
@@ -156,6 +153,9 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
             Log.i(TAG, "ServiceDiscovery.udp-g: releasing");
             multicastLock.release();
             wifiLock.release();
+
+            running = false;
+            sync.leave();
         } catch (Exception e) {
             Log.e(TAG, "ServiceDiscovery.udp-g: failed: Error code:", e);
             running = false;
