@@ -32,7 +32,7 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
     @Override
     protected Boolean doInBackground(Void... voids) {
         try {
-            Log.i(TAG, "ServiceDiscovery.udp-d: listening " + "local:" + ServiceDiscovery.UdpDirectPort);
+            Log.i(TAG, "ServiceDiscovery.udp-d: starting " + "local:" + ServiceDiscovery.UdpDirectPort);
             running = true;
             try {
                 byte[] buffer = new byte[ServiceDiscovery.UdpMaximumPacketSize];
@@ -43,6 +43,8 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
                 socket.setSoTimeout(1000);
 
                 socket.bind(socketAddress);
+
+                Log.i(TAG, "ServiceDiscovery.udp-d: listening " + "local:" + ServiceDiscovery.UdpDirectPort);
 
                 sync.leave();
 

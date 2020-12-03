@@ -96,6 +96,8 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                     socket.joinGroup(group);
                 }
 
+                Log.i(TAG, String.format("ServiceDiscovery.udp-g: joined"));
+
                 sync.leave();
 
                 try {
