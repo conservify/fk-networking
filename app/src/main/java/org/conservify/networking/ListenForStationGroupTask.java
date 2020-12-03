@@ -88,11 +88,11 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                     }
                     final SocketAddress multicastAddr = new InetSocketAddress(group, ServiceDiscovery.UdpGroupPort);
 
-                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup(%s %s)", multicastAddr, hostInterface));
+                    Log.i(TAG, String.format("ServiceDiscovery.udp-g: trying to joinGroup(%s, %s)", multicastAddr, hostInterface));
 
                     socket.joinGroup(multicastAddr, hostInterface);
                 } else {
-                    Log.i(TAG, String.format("ServiceDiscovery.udp-g trying to joinGroup(%s)", group));
+                    Log.i(TAG, String.format("ServiceDiscovery.udp-g: trying to joinGroup(%s)", group));
                     socket.joinGroup(group);
                 }
 
@@ -155,7 +155,8 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
             multicastLock.release();
             wifiLock.release();
         } catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.udp-g failed: Error code:", e);
+            Log.e(TAG, "ServiceDiscovery.udp-g: failed: Error code:", e);
+            running = false;
         }
 
         Log.i(TAG,"ServiceDiscovery.udp-g: stopped");
