@@ -16,6 +16,7 @@ public class WebTransfer {
     private String contentType;
     private boolean base64DecodeRequestBody;
     private boolean base64EncodeResponseBody;
+    private boolean favorLocal;
     private int connectionTimeout = 10;
     private int defaultTimeout = 10;
 
@@ -96,6 +97,14 @@ public class WebTransfer {
 
     public void setBase64EncodeResponseBody(boolean base64EncodeResponseBody) {
         this.base64EncodeResponseBody = base64EncodeResponseBody;
+    }
+
+    public boolean isFavorLocal() {
+        return favorLocal;
+    }
+
+    public void setFavorLocal(boolean favorLocal) {
+        this.favorLocal = favorLocal;
     }
 
     public String getContentType() {
