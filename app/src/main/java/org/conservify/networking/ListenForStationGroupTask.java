@@ -104,6 +104,8 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                     byte[] buffer = new byte[ServiceDiscovery.UdpMaximumPacketSize];
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
+                    long skippedTos = 0;
+
                     while (!isCancelled()) {
                         try {
                             socket.receive(packet);
@@ -127,7 +129,11 @@ public class ListenForStationGroupTask extends AsyncTask<Void, Void, Boolean> {
                             networkingListener.onUdpMessage(new JavaUdpMessage(remoteAddress, encoded));
                         }
                         catch (SocketTimeoutException e){
-                            Log.d(TAG, "ServiceDiscovery.udp-g: to");
+                            skippedTos++;
+                            if (skippedTos >= 30) {
+                                Log.d(TAG, "ServiceDiscovery.udp-g: to");
+                                skippedTos = 0;
+                            }
                         }
                     }
                 }

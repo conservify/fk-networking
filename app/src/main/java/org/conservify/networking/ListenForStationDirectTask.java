@@ -48,6 +48,8 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
 
                 sync.leave();
 
+                long skippedTos = 0;
+
                 while (!isCancelled()) {
                     try {
                         socket.receive(packet);
@@ -72,7 +74,11 @@ public class ListenForStationDirectTask extends AsyncTask<Void,Void, Boolean> {
                         networkingListener.onUdpMessage(new JavaUdpMessage(remoteAddress, encoded));
                     }
                     catch (SocketTimeoutException e){
-                        Log.d(TAG, "ServiceDiscovery.udp-d: to");
+                        skippedTos++;
+                        if (skippedTos >= 30) {
+                            Log.d(TAG, "ServiceDiscovery.udp-d: to");
+                            skippedTos = 0;
+                        }
                     }
                 }
             } catch (Exception e) {
