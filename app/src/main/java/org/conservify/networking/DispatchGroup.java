@@ -27,14 +27,25 @@ public class DispatchGroup {
         Log.i(TAG, "DispatchGroup::notify(" + counter.get() + ")");
         runnable.set(r);
         notifyGroup();
+        Log.i(TAG, "DispatchGroup::notify(" + counter.get() + ") done");
     }
 
     private synchronized void notifyGroup() {
         long value = counter.get();
+        Log.i(TAG, "DispatchGroup::notifyGroupInside(" + value + ")");
         if (value == 0) {
             Runnable running = runnable.getAndSet(null);
             if (running != null) {
-                running.run();
+                Log.i(TAG, "DispatchGroup::invoking");
+                try {
+                    running.run();
+                }
+                catch (Exception e) {
+                    Log.e(TAG, "DispatchGroup.notify failed:", e);
+                }
+                finally {
+                    Log.i(TAG, "DispatchGroup::invoked");
+                }
             }
             else {
                 Log.i(TAG, "DispatchGroup::late notifyGroup()");

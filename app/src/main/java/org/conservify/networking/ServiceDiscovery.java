@@ -70,7 +70,7 @@ public class ServiceDiscovery {
         discoveryListener = new NsdManager.DiscoveryListener() {
             @Override
             public void onDiscoveryStarted(String regType) {
-                Log.d(TAG, "ServiceDiscovery started");
+                Log.d(TAG, "ServiceDiscovery started: " + regType);
                 dg.leave();
             }
 
@@ -235,15 +235,19 @@ public class ServiceDiscovery {
             dg.notify(new Runnable() {
                 @Override
                 public void run() {
-                    Log.i(TAG, String.format("ServiceDiscovery started"));
+                    Log.i(TAG, String.format("ServiceDiscovery start notified"));
                     lock.release();
                     networkingListener.onStarted();
+                    Log.i(TAG, String.format("ServiceDiscovery start finished"));
                 }
             });
         }
         catch (Exception e) {
             Log.e(TAG, "ServiceDiscovery.start failed:", e);
             networkingListener.onDiscoveryFailed();
+        }
+        finally {
+            Log.i(TAG, String.format("ServiceDiscovery start exiting"));
         }
     }
 
@@ -306,7 +310,7 @@ public class ServiceDiscovery {
 
         try {
             if (discovering) {
-                Log.d(TAG, "ServiceDiscovery.stop");
+                Log.d(TAG, "ServiceDiscovery.stop finished");
                 dg.enter();
                 nsdManager.stopServiceDiscovery(discoveryListener);
             }
@@ -321,11 +325,14 @@ public class ServiceDiscovery {
         dg.notify(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "ServiceDiscovery stopped");
+                Log.i(TAG, "ServiceDiscovery stopped notified");
                 lock.release();
                 networkingListener.onStopped();
+                Log.i(TAG, "ServiceDiscovery stopped finished");
             }
         });
+
+        Log.i(TAG, "ServiceDiscovery stopped exiting");
     }
 
 }
