@@ -161,178 +161,208 @@ public class ServiceDiscovery {
         nsdManager = (NsdManager)context.getSystemService(Context.NSD_SERVICE);
     }
 
-    public void start(StartOptions options) {
-        String serviceTypeSearch = options.getServiceTypeSearch();
-        String serviceNameSelf = options.getServiceNameSelf();
-        String serviceTypeSelf = options.getServiceTypeSelf();
+    class StartDiscoveryTask extends AsyncTask<Void,Void, Boolean> {
+        private final StartOptions options;
 
-        Log.d(TAG, "ServiceDiscovery starting (acquire)");
-
-        try {
-            lock.acquire();
-        } catch (InterruptedException e) {
-            Log.d(TAG, "ServiceDiscovery starting (acquire failed");
-            return;
+        public StartDiscoveryTask(StartOptions options) {
+            this.options = options;
         }
 
-        Log.d(TAG, "ServiceDiscovery starting");
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            String serviceTypeSearch = options.getServiceTypeSearch();
+            String serviceNameSelf = options.getServiceNameSelf();
+            String serviceTypeSelf = options.getServiceTypeSelf();
 
-        clearErrors();
-        dg.reset();
+            Log.d(TAG, "ServiceDiscovery starting (acquire)");
 
-        try {
-            Log.d(TAG, "ServiceDiscovery.start called");
-
-            if (!discovering && serviceTypeSearch != null && serviceTypeSearch.length() > 0) {
-                Log.d(TAG, "ServiceDiscovery discovery starting");
-                dg.enter();
-                nsdManager.discoverServices(serviceTypeSearch, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
-                discovering = true;
-            }
-            else {
-                Log.d(TAG, String.format("ServiceDiscovery skip discovering: %s / %s", discovering, serviceTypeSearch));
+            try {
+                lock.acquire();
+            } catch (InterruptedException e) {
+                Log.d(TAG, "ServiceDiscovery starting (acquire failed");
+                return null;
             }
 
-            if (listenGroupTask == null) {
-                Log.d(TAG, "ServiceDiscovery listeners udp-g");
-                dg.enter();
-                listenGroupTask = new ListenForStationGroupTask(networkingListener, context, dg);
-                listenGroupTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
-            else {
-                Log.d(TAG, "ServiceDiscovery listeners udp-g already running");
-            }
+            Log.d(TAG, "ServiceDiscovery starting");
 
-            if (listenDirectTask == null) {
-                Log.d(TAG, "ServiceDiscovery listeners udp-d");
-                dg.enter();
-                listenDirectTask = new ListenForStationDirectTask(this. networkingListener, dg);
-                listenDirectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
-            else {
-                Log.d(TAG, "ServiceDiscovery listeners udp-d already running");
-            }
+            clearErrors();
+            dg.reset();
 
-            if (serviceNameSelf != null && serviceNameSelf.length() > 0 && serviceTypeSelf != null && serviceTypeSelf.length() > 0) {
-                if (!registered) {
-                    Log.d(TAG, "ServiceDiscovery registering: " + serviceTypeSelf + " " + serviceNameSelf);
-                    NsdServiceInfo info = new NsdServiceInfo();
-                    info.setServiceName(serviceNameSelf);
-                    info.setServiceType(serviceTypeSelf);
-                    info.setPort(UdpGroupPort);
+            try {
+                Log.d(TAG, "ServiceDiscovery.start called");
+
+                if (!discovering && serviceTypeSearch != null && serviceTypeSearch.length() > 0) {
+                    Log.d(TAG, "ServiceDiscovery discovery starting");
                     dg.enter();
-                    nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-                    registered = true;
+                    nsdManager.discoverServices(serviceTypeSearch, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+                    discovering = true;
                 }
                 else {
-                    Log.d(TAG, "ServiceDiscovery already registered");
+                    Log.d(TAG, String.format("ServiceDiscovery skip discovering: %s / %s", discovering, serviceTypeSearch));
+                }
+
+                if (listenGroupTask == null) {
+                    Log.d(TAG, "ServiceDiscovery listeners udp-g");
+                    dg.enter();
+                    listenGroupTask = new ListenForStationGroupTask(networkingListener, context, dg);
+                    listenGroupTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                }
+                else {
+                    Log.d(TAG, "ServiceDiscovery listeners udp-g already running");
+                }
+
+                if (listenDirectTask == null) {
+                    Log.d(TAG, "ServiceDiscovery listeners udp-d");
+                    dg.enter();
+                    listenDirectTask = new ListenForStationDirectTask( networkingListener, dg);
+                    listenDirectTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                }
+                else {
+                    Log.d(TAG, "ServiceDiscovery listeners udp-d already running");
+                }
+
+                if (serviceNameSelf != null && serviceNameSelf.length() > 0 && serviceTypeSelf != null && serviceTypeSelf.length() > 0) {
+                    if (!registered) {
+                        Log.d(TAG, "ServiceDiscovery registering: " + serviceTypeSelf + " " + serviceNameSelf);
+                        NsdServiceInfo info = new NsdServiceInfo();
+                        info.setServiceName(serviceNameSelf);
+                        info.setServiceType(serviceTypeSelf);
+                        info.setPort(UdpGroupPort);
+                        dg.enter();
+                        nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+                        registered = true;
+                    }
+                    else {
+                        Log.d(TAG, "ServiceDiscovery already registered");
+                    }
+                }
+                else {
+                    Log.d(TAG, "ServiceDiscovery registering skipped");
+                }
+
+                dg.notify(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i(TAG, String.format("ServiceDiscovery start notified"));
+                        lock.release();
+                        networkingListener.onStarted();
+                        Log.i(TAG, String.format("ServiceDiscovery start finished"));
+                    }
+                });
+            }
+            catch (Exception e) {
+                Log.e(TAG, "ServiceDiscovery.start failed:", e);
+                networkingListener.onDiscoveryFailed();
+            }
+            finally {
+                Log.i(TAG, String.format("ServiceDiscovery start exiting"));
+            }
+
+            return null;
+        }
+    }
+
+    public void start(StartOptions options) {
+        StartDiscoveryTask task = new StartDiscoveryTask(options);
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    class StopDiscoveryTask extends AsyncTask<Void,Void, Boolean> {
+        private final StopOptions options;
+
+        public StopDiscoveryTask(StopOptions options) {
+            this.options = options;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            Log.d(TAG, "ServiceDiscovery stopping (acquire)");
+
+            try {
+                lock.acquire();
+            } catch (InterruptedException e) {
+                Log.d(TAG, "ServiceDiscovery starting (acquire failed");
+                return null;
+            }
+
+            Log.d(TAG, "ServiceDiscovery stopping");
+
+            clearErrors();
+            dg.reset();
+
+            try {
+                if (registered) {
+                    Log.d(TAG, "ServiceDiscovery.stop");
+                    dg.enter();
+                    nsdManager.unregisterService(registrationListener);
                 }
             }
-            else {
-                Log.d(TAG, "ServiceDiscovery registering skipped");
+            catch (Exception e) {
+                Log.e(TAG, "ServiceDiscovery.stop unregisterService failed:", e);
+            }
+            finally {
+                registered = false;
+            }
+
+            try {
+                if (listenDirectTask != null && listenDirectTask.isRunning()) {
+                    Log.d(TAG, "ServiceDiscovery.cancel udp-d");
+                    dg.enter();
+                    listenDirectTask.cancel(true);
+                }
+            }
+            catch (Exception e) {
+                Log.e(TAG, "ServiceDiscovery.stop udp-d:", e);
+            }
+            finally {
+                listenDirectTask = null;
+            }
+
+            try {
+                if (listenGroupTask != null && listenGroupTask.isRunning()) {
+                    Log.d(TAG, "ServiceDiscovery.cancel udp-g");
+                    dg.enter();
+                    listenGroupTask.cancel(true);
+                }
+            }
+            catch (Exception e) {
+                Log.e(TAG, "ServiceDiscovery.stop udp-g:", e);
+            }
+            finally {
+                listenGroupTask = null;
+            }
+
+            try {
+                if (discovering) {
+                    Log.d(TAG, "ServiceDiscovery.stop finished");
+                    dg.enter();
+                    nsdManager.stopServiceDiscovery(discoveryListener);
+                }
+            }
+            catch (Exception e) {
+                Log.e(TAG, "ServiceDiscovery.stop stopServiceDiscovery failed:", e);
+            }
+            finally {
+                discovering = false;
             }
 
             dg.notify(new Runnable() {
                 @Override
                 public void run() {
-                    Log.i(TAG, String.format("ServiceDiscovery start notified"));
+                    Log.i(TAG, "ServiceDiscovery stopped notified");
                     lock.release();
-                    networkingListener.onStarted();
-                    Log.i(TAG, String.format("ServiceDiscovery start finished"));
+                    networkingListener.onStopped();
+                    Log.i(TAG, "ServiceDiscovery stopped finished");
                 }
             });
-        }
-        catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.start failed:", e);
-            networkingListener.onDiscoveryFailed();
-        }
-        finally {
-            Log.i(TAG, String.format("ServiceDiscovery start exiting"));
+
+            Log.i(TAG, "ServiceDiscovery stopped exiting");
+            return null;
         }
     }
 
     public void stop(StopOptions options) {
-        Log.d(TAG, "ServiceDiscovery stopping (acquire)");
-
-        try {
-            lock.acquire();
-        } catch (InterruptedException e) {
-            Log.d(TAG, "ServiceDiscovery starting (acquire failed");
-            return;
-        }
-
-        Log.d(TAG, "ServiceDiscovery stopping");
-
-        clearErrors();
-        dg.reset();
-
-        try {
-            if (registered) {
-                Log.d(TAG, "ServiceDiscovery.stop");
-                dg.enter();
-                nsdManager.unregisterService(registrationListener);
-            }
-        }
-        catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.stop unregisterService failed:", e);
-        }
-        finally {
-            registered = false;
-        }
-
-        try {
-            if (listenDirectTask != null && listenDirectTask.isRunning()) {
-                Log.d(TAG, "ServiceDiscovery.cancel udp-d");
-                dg.enter();
-                listenDirectTask.cancel(true);
-            }
-        }
-        catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.stop udp-d:", e);
-        }
-        finally {
-            listenDirectTask = null;
-        }
-
-        try {
-            if (listenGroupTask != null && listenGroupTask.isRunning()) {
-                Log.d(TAG, "ServiceDiscovery.cancel udp-g");
-                dg.enter();
-                listenGroupTask.cancel(true);
-            }
-        }
-        catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.stop udp-g:", e);
-        }
-        finally {
-            listenGroupTask = null;
-        }
-
-        try {
-            if (discovering) {
-                Log.d(TAG, "ServiceDiscovery.stop finished");
-                dg.enter();
-                nsdManager.stopServiceDiscovery(discoveryListener);
-            }
-        }
-        catch (Exception e) {
-            Log.e(TAG, "ServiceDiscovery.stop stopServiceDiscovery failed:", e);
-        }
-        finally {
-            discovering = false;
-        }
-
-        dg.notify(new Runnable() {
-            @Override
-            public void run() {
-                Log.i(TAG, "ServiceDiscovery stopped notified");
-                lock.release();
-                networkingListener.onStopped();
-                Log.i(TAG, "ServiceDiscovery stopped finished");
-            }
-        });
-
-        Log.i(TAG, "ServiceDiscovery stopped exiting");
+        StopDiscoveryTask task = new StopDiscoveryTask(options);
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
-
 }
